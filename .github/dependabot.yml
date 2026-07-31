@@ -1,0 +1,52 @@
+version: 2
+
+# ============================================================================
+#  Atualizações automáticas de dependências.
+#
+#  Existe por causa de uma troca: o workflow de deploy fixa a ação de FTP num
+#  commit imutável, porque ela recebe a senha do servidor e uma tag pode ser
+#  repontada. O custo disso é que um SHA fixo nunca se atualiza sozinho — nem
+#  para receber correção de segurança.
+#
+#  O Dependabot paga esse custo: ele abre um pull request quando sai versão
+#  nova, com o changelog. Você lê e decide. Fixar deixa de significar
+#  desatualizar.
+# ============================================================================
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'ci'
+    labels:
+      - dependencias
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'deps'
+    labels:
+      - dependencias
+    groups:
+      # Astro e suas integrações sobem juntos, senão um PR separado por pacote
+      # deixa o repositório com dez PRs que só passam se forem mesclados na
+      # ordem certa.
+      astro:
+        patterns:
+          - 'astro'
+          - '@astrojs/*'
+          - 'satteri'
+      ferramentas:
+        patterns:
+          - 'prettier*'
+          - 'typescript'
+          - 'vitest'
+        update-types:
+          - minor
+          - patch

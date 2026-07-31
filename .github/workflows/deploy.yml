@@ -87,11 +87,30 @@ jobs:
           test -f dist/index.html || { echo "::error::dist/index.html não existe"; exit 1; }
           test -f dist/.htaccess  || { echo "::error::dist/.htaccess não existe"; exit 1; }
           test -f dist/blog/index.html || { echo "::error::listagem do blog não existe"; exit 1; }
+
+          # O sync do painel degrada com aviso em vez de derrubar o build — a
+          # escolha certa localmente, porque um site sem editor ainda é um site
+          # que funciona. Mas no CI ninguém lê o aviso, e um /admin quebrado
+          # seria publicado em silêncio. Aqui vira erro.
+          test -f dist/admin/index.html    || { echo "::error::painel /admin não foi gerado"; exit 1; }
+          test -f dist/admin/config.yml    || { echo "::error::config do painel não foi gerado"; exit 1; }
+          test -s dist/admin/sveltia-cms.js || { echo "::error::bundle do painel ausente ou vazio"; exit 1; }
+
           echo "  páginas geradas: $(find dist -name 'index.html' | wc -l)"
           echo "  tamanho total:   $(du -sh dist | cut -f1)"
+          echo "  painel:          $(du -h dist/admin/sveltia-cms.js | cut -f1)"
 
       - name: Enviar por FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        # Fixado no commit, não na tag.
+        #
+        # Esta ação recebe a senha do FTP. Uma tag do Git é um ponteiro móvel:
+        # se a conta do mantenedor for comprometida, `v4.3.5` pode ser
+        # repontada para código que exfiltra a credencial, e o workflow puxaria
+        # isso sozinho no próximo deploy. O commit é imutável.
+        #
+        # O Dependabot (.github/dependabot.yml) abre PR quando sair versão
+        # nova, então fixar não significa ficar desatualizado.
+        uses: SamKirkland/FTP-Deploy-Action@8e83cea8672e3fbcbb9fdafff34debf6ae4c5f65 # v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}

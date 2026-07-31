@@ -46,6 +46,19 @@
   #  Continua fechado onde importa: `object-src 'none'`, `base-uri 'self'`,
   #  `frame-ancestors 'none'` (o painel nunca deve ser embutido em iframe) e
   #  `form-action 'none'` (o CMS envia tudo por fetch).
+  #
+  #  PONTO A APERTAR: `blob:` em `script-src` permite executar script criado a
+  #  partir de Blob URL, o que é um afrouxamento real. Ele está aí por
+  #  precaução — `worker-src 'self' blob:` já cobre Web Workers na CSP nível 3,
+  #  então `blob:` em `script-src` provavelmente é redundante. Não foi removido
+  #  porque validar exige entrar no painel com um token real do GitHub.
+  #
+  #  Quando você tiver o painel funcionando: remova ` blob:` de `script-src`,
+  #  recarregue /admin, edite e salve um post. Funcionou, deixe removido. O
+  #  console do navegador aponta o bloqueio se tiver quebrado.
+  #
+  #  O risco atual é baixo: a superfície é privada, exige token do GitHub para
+  #  fazer qualquer coisa, e não renderiza conteúdo de terceiros.
   # --------------------------------------------------------------------------
   Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com https://*.githubusercontent.com; font-src 'self' data:; connect-src 'self' https://api.github.com https://github.com https://*.githubusercontent.com; upgrade-insecure-requests"
 
