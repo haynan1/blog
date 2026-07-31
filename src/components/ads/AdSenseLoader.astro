@@ -39,9 +39,18 @@ const scriptSrc = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.j
     window.adsbygoogle = window.adsbygoogle ?? [];
 
     for (const unit of units) {
-      // O AdSense marca a unidade depois de processá-la. Sem essa checagem,
-      // uma segunda passada dispararia "already have ads in them".
-      if (unit.dataset['adStatus'] || unit.dataset['adsbygoogleStatus']) continue;
+      // Marca nossa, gravada ANTES do push.
+      //
+      // As marcas do próprio AdSense (`data-ad-status`) só aparecem depois que
+      // o script do Google processa a unidade, o que é assíncrono. Como o
+      // `astro:page-load` também dispara no carregamento inicial, esta função
+      // roda duas vezes na primeira página — e, se o Google ainda não tiver
+      // processado nada, as duas passadas veriam unidades "novas" e
+      // empilhariam o dobro de pushes. O excedente vira TagError
+      // ("already have ads in them") e polui o diagnóstico da conta.
+      if (unit.dataset['adRequested']) continue;
+      unit.dataset['adRequested'] = '1';
+
       try {
         window.adsbygoogle.push({});
       } catch {
@@ -50,6 +59,7 @@ const scriptSrc = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.j
     }
   };
 
-  initAds();
+  // Só o evento: ele dispara tanto no carregamento inicial quanto em cada
+  // navegação do ClientRouter, então uma chamada direta aqui seria a segunda.
   document.addEventListener('astro:page-load', initAds);
 </script>

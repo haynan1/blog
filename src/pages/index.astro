@@ -6,8 +6,8 @@ import { SITE } from '~/config/site';
 import { buildGraph } from '~/lib/schema';
 
 const posts = await getPosts();
-const featured = await getFeaturedPost(posts);
-const categories = await getCategoriesWithCount(posts);
+const featured = getFeaturedPost(posts);
+const categories = getCategoriesWithCount(posts);
 
 // O destaque não se repete na grade abaixo.
 const recent = posts.filter((post) => post.id !== featured?.id).slice(0, 6);

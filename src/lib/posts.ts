@@ -37,24 +37,19 @@ export async function getPosts(): Promise<Post[]> {
   return entries.map(toPost).sort(byDateDesc);
 }
 
-export async function getPostsByCategory(category: CategorySlug): Promise<Post[]> {
-  const posts = await getPosts();
-  return posts.filter((post) => post.data.category === category);
-}
-
 /**
  * Post do hero da home: o marcado como `featured` ou, na ausência dele, o mais
  * recente. Se houver mais de um `featured`, vence o mais recente — sem estado
  * escondido nem ordem de arquivo definindo layout.
  */
-export async function getFeaturedPost(posts: Post[]): Promise<Post | undefined> {
+export function getFeaturedPost(posts: Post[]): Post | undefined {
   return posts.find((post) => post.data.featured) ?? posts[0];
 }
 
 /** Categorias que têm ao menos um post publicado, com a contagem. */
-export async function getCategoriesWithCount(
+export function getCategoriesWithCount(
   posts: Post[],
-): Promise<Array<{ slug: CategorySlug; name: string; description: string; count: number }>> {
+): Array<{ slug: CategorySlug; name: string; description: string; count: number }> {
   const counts = new Map<string, number>();
   for (const post of posts) {
     counts.set(post.data.category, (counts.get(post.data.category) ?? 0) + 1);

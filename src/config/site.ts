@@ -50,8 +50,6 @@ export const SITE = {
   wordsPerMinute: 200,
 } as const;
 
-export type SiteConfig = typeof SITE;
-
 /** Navegação principal do header. */
 export const NAV_LINKS = [
   { label: 'Blog', href: '/blog' },

@@ -45,7 +45,7 @@ function stripMarkdown(markdown: string): string {
  * Conta palavras de um texto em pt-BR. Hífen e apóstrofo fazem parte da
  * palavra — "guarda-chuva" conta como uma, não duas.
  */
-export function countWords(markdown: string): number {
+function countWords(markdown: string): number {
   const matches = stripMarkdown(markdown).match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu);
   return matches?.length ?? 0;
 }

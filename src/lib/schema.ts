@@ -101,10 +101,44 @@ export function collectionPageNode(name: string, description: string, href: stri
   };
 }
 
-/** Empacota os nós no envelope `@graph` final. */
+/**
+ * Escapa os caracteres que quebrariam o bloco `<script>` que hospeda o JSON-LD.
+ *
+ * `JSON.stringify` produz JSON válido, mas não sabe que o resultado vai ser
+ * embutido em HTML. O parser do navegador encerra um elemento `<script>` no
+ * primeiro `</script`, esteja ele dentro de uma string JSON ou não — então um
+ * título de post contendo `</script>` fecharia a tag e o que viesse depois
+ * seria interpretado como marcação viva.
+ *
+ * Hoje o conteúdo vem de arquivos Markdown escritos pelo dono do site, então
+ * não há caminho de entrada não confiável. Isso muda no dia em que entrar um
+ * post de autor convidado — o schema já prevê o campo `author` — ou um texto
+ * colado de fora. E, mesmo sem malícia, um `<` legítimo num título corromperia
+ * o structured data em silêncio, derrubando o rich result sem erro nenhum.
+ *
+ * `<` é JSON válido e desenha o mesmo caractere: o Google lê igual, o
+ * parser de HTML não vê mais uma tag.
+ */
+function escapeForScriptTag(json: string): string {
+  return (
+    json
+      .replace(/</g, '\\u003c')
+      .replace(/>/g, '\\u003e')
+      .replace(/&/g, '\\u0026')
+      // U+2028/U+2029 sao quebras de linha validas em JSON e ilegais em
+      // JavaScript. Escapa-las mantem o bloco parseavel se algum dia ele
+      // for lido por um `JSON.parse` embutido.
+      .replace(/\u2028/g, '\\u2028')
+      .replace(/\u2029/g, '\\u2029')
+  );
+}
+
+/** Empacota os nós no envelope `@graph` final, pronto para ir num `<script>`. */
 export function buildGraph(...nodes: JsonLdNode[]): string {
-  return JSON.stringify({
-    '@context': 'https://schema.org',
-    '@graph': [organizationNode(), websiteNode(), ...nodes],
-  });
+  return escapeForScriptTag(
+    JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [organizationNode(), websiteNode(), ...nodes],
+    }),
+  );
 }
