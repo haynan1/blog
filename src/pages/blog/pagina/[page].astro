@@ -1,6 +1,12 @@
 ---
 import ArchiveLayout from '~/layouts/ArchiveLayout.astro';
-import { getPosts, pageNumbersAfterFirst, paginate, type Post } from '~/lib/posts';
+import {
+  getCategoriesWithCount,
+  getPosts,
+  pageNumbersAfterFirst,
+  paginate,
+  type Post,
+} from '~/lib/posts';
 import { SITE } from '~/config/site';
 
 export async function getStaticPaths() {
@@ -20,6 +26,7 @@ interface Props {
 }
 
 const { page, posts } = Astro.props;
+const categories = getCategoriesWithCount(posts);
 
 const buildHref = (target: number) => (target === 1 ? '/blog' : `/blog/pagina/${target}`);
 const paginated = paginate(posts, page, SITE.postsPerPage, buildHref);
@@ -35,4 +42,6 @@ const description =
   crumbs={[{ name: 'Blog', href: '/blog' }]}
   paginated={paginated}
   buildHref={buildHref}
+  categories={categories}
+  totalPosts={posts.length}
 />

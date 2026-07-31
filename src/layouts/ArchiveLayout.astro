@@ -4,8 +4,10 @@ import Breadcrumb from '~/components/ui/Breadcrumb.astro';
 import Pagination from '~/components/ui/Pagination.astro';
 import PostCard from '~/components/post/PostCard.astro';
 import AdSlot from '~/components/ads/AdSlot.astro';
+import CategoryNav from '~/components/ui/CategoryNav.astro';
 import type { Crumb } from '~/lib/schema';
 import type { Paginated, Post } from '~/lib/posts';
+import type { CategorySlug } from '~/config/categories';
 
 /**
  * Layout compartilhado por /blog e pelos arquivos de categoria.
@@ -26,10 +28,27 @@ interface Props {
   jsonLd?: string | undefined;
   /** Canonical da página 1, para não duplicar com a rota paginada. */
   canonical?: string | undefined;
+  /** Assuntos com post publicado, para o filtro no topo. */
+  categories: Array<{ slug: CategorySlug; name: string; count: number }>;
+  /** Assunto ativo. Ausente em /blog, onde "Todos" é o ativo. */
+  activeCategory?: CategorySlug | undefined;
+  /** Total de artigos do site, para o contador do "Todos". */
+  totalPosts: number;
 }
 
-const { eyebrow, title, description, crumbs, paginated, buildHref, jsonLd, canonical } =
-  Astro.props;
+const {
+  eyebrow,
+  title,
+  description,
+  crumbs,
+  paginated,
+  buildHref,
+  jsonLd,
+  canonical,
+  categories,
+  activeCategory,
+  totalPosts,
+} = Astro.props;
 
 const { items, page, totalPages, total, prevUrl, nextUrl } = paginated;
 
@@ -66,6 +85,7 @@ const countLabel = [
       <h1 class="archive__title">{title}</h1>
       <p class="archive__description">{description}</p>
       <p class="archive__count">{countLabel}</p>
+      <CategoryNav categories={categories} active={activeCategory} total={totalPosts} />
     </header>
 
     <div class="archive__layout">

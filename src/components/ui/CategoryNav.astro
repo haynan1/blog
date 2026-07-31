@@ -1,0 +1,151 @@
+---
+import { CATEGORIES, type CategorySlug } from '~/config/categories';
+
+/**
+ * Filtro de assuntos do arquivo.
+ *
+ * Fica no topo da listagem, e não numa coluna lateral, por dois motivos.
+ * O primeiro é que uma sidebar desaparece no celular — que é de onde vem a
+ * maior parte do tráfego de conteúdo em pt-BR — e o assunto passaria a ser
+ * navegável só no desktop. O segundo é que a coluna lateral aqui já é o espaço
+ * do anúncio; disputar esse espaço com navegação piora as duas coisas.
+ *
+ * São âncoras estáticas, não filtro em JavaScript: cada assunto é uma URL real,
+ * indexável, compartilhável e que funciona com o botão "voltar". Um filtro
+ * client-side daria a mesma sensação e nenhuma dessas quatro propriedades.
+ */
+
+interface Props {
+  /** Categorias com ao menos um post, já com a contagem. */
+  categories: Array<{ slug: CategorySlug; name: string; count: number }>;
+  /** Slug ativo, ou `undefined` em /blog (onde "Todos" é o ativo). */
+  active?: CategorySlug | undefined;
+  total: number;
+}
+
+const { categories, active, total } = Astro.props;
+
+// A categoria ativa entra na lista mesmo sem post publicado: sem isso, abrir um
+// arquivo vazio mostraria um filtro em que nenhum item está marcado.
+const visible = categories.some((c) => c.slug === active)
+  ? categories
+  : [
+      ...categories,
+      ...CATEGORIES.filter((c) => c.slug === active).map((c) => ({
+        slug: c.slug,
+        name: c.name,
+        count: 0,
+      })),
+    ];
+---
+
+{
+  visible.length > 0 && (
+    <nav class="cat-nav" aria-label="Filtrar por assunto">
+      <ul class="cat-nav__list">
+        <li>
+          <a
+            href="/blog"
+            class="cat-nav__item"
+            aria-current={active === undefined ? 'page' : undefined}
+          >
+            Todos
+            <span class="cat-nav__count">{total}</span>
+          </a>
+        </li>
+        {visible.map((category) => (
+          <li>
+            <a
+              href={`/categoria/${category.slug}`}
+              class="cat-nav__item"
+              aria-current={active === category.slug ? 'page' : undefined}
+            >
+              {category.name}
+              <span class="cat-nav__count">{category.count}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<style>
+  .cat-nav {
+    margin-top: 1.75rem;
+  }
+
+  .cat-nav__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .cat-nav__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-pill);
+    background-color: var(--c-surface);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--c-ink-muted);
+    white-space: nowrap;
+    transition:
+      border-color 0.2s var(--ease-out-soft),
+      color 0.2s var(--ease-out-soft),
+      background-color 0.2s var(--ease-out-soft);
+  }
+
+  .cat-nav__item:hover {
+    border-color: var(--c-line-strong);
+    color: var(--c-ink);
+  }
+
+  /* O item ativo inverte: é o único elemento sólido da linha, então lê como
+     estado selecionado sem precisar de rótulo extra. */
+  .cat-nav__item[aria-current='page'] {
+    background-color: var(--c-ink);
+    border-color: var(--c-ink);
+    color: var(--c-paper);
+    font-weight: 600;
+  }
+
+  .cat-nav__count {
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-ink-subtle);
+  }
+
+  .cat-nav__item[aria-current='page'] .cat-nav__count {
+    color: var(--c-paper);
+    opacity: 0.65;
+  }
+
+  /* No celular a linha vira uma faixa rolável, em vez de quebrar em quatro
+     linhas e empurrar os posts para fora da primeira dobra. */
+  @media (max-width: 640px) {
+    .cat-nav__list {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+      /* Sangra até a borda da tela para não parecer cortada no meio. */
+      margin-inline: -1.25rem;
+      padding-inline: 1.25rem;
+      padding-bottom: 0.25rem;
+    }
+
+    .cat-nav__list::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cat-nav__item {
+      transition: none;
+    }
+  }
+</style>

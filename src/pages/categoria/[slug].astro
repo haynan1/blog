@@ -1,7 +1,7 @@
 ---
 import ArchiveLayout from '~/layouts/ArchiveLayout.astro';
 import { CATEGORIES, type Category } from '~/config/categories';
-import { getPosts, paginate, type Post } from '~/lib/posts';
+import { getCategoriesWithCount, getPosts, paginate, type Post } from '~/lib/posts';
 import { SITE } from '~/config/site';
 import { breadcrumbNode, buildGraph, collectionPageNode } from '~/lib/schema';
 
@@ -15,6 +15,10 @@ export async function getStaticPaths() {
     props: {
       category,
       posts: posts.filter((post) => post.data.category === category.slug),
+      // O filtro de assuntos precisa dos numeros de TODAS as categorias, nao so
+      // desta — por isso a lista completa viaja junto.
+      categories: getCategoriesWithCount(posts),
+      totalPosts: posts.length,
     },
   }));
 }
@@ -22,9 +26,11 @@ export async function getStaticPaths() {
 interface Props {
   category: Category;
   posts: Post[];
+  categories: Array<{ slug: Category['slug']; name: string; count: number }>;
+  totalPosts: number;
 }
 
-const { category, posts } = Astro.props;
+const { category, posts, categories, totalPosts } = Astro.props;
 
 const base = `/categoria/${category.slug}`;
 const buildHref = (page: number) => (page === 1 ? base : `${base}/pagina/${page}`);
@@ -49,4 +55,7 @@ const jsonLd = buildGraph(
   paginated={paginated}
   buildHref={buildHref}
   jsonLd={jsonLd}
+  categories={categories}
+  activeCategory={category.slug}
+  totalPosts={totalPosts}
 />

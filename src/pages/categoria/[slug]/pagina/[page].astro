@@ -1,18 +1,26 @@
 ---
 import ArchiveLayout from '~/layouts/ArchiveLayout.astro';
 import { CATEGORIES, type Category } from '~/config/categories';
-import { getPosts, pageNumbersAfterFirst, paginate, type Post } from '~/lib/posts';
+import {
+  getCategoriesWithCount,
+  getPosts,
+  pageNumbersAfterFirst,
+  paginate,
+  type Post,
+} from '~/lib/posts';
 import { SITE } from '~/config/site';
 
 export async function getStaticPaths() {
   const posts = await getPosts();
+
+  const categories = getCategoriesWithCount(posts);
 
   return CATEGORIES.flatMap((category) => {
     const categoryPosts = posts.filter((post) => post.data.category === category.slug);
 
     return pageNumbersAfterFirst(categoryPosts.length, SITE.postsPerPage).map((page) => ({
       params: { slug: category.slug, page: String(page) },
-      props: { category, page, posts: categoryPosts },
+      props: { category, page, posts: categoryPosts, categories, totalPosts: posts.length },
     }));
   });
 }
@@ -21,9 +29,11 @@ interface Props {
   category: Category;
   page: number;
   posts: Post[];
+  categories: Array<{ slug: Category['slug']; name: string; count: number }>;
+  totalPosts: number;
 }
 
-const { category, page, posts } = Astro.props;
+const { category, page, posts, categories, totalPosts } = Astro.props;
 
 const base = `/categoria/${category.slug}`;
 const buildHref = (target: number) => (target === 1 ? base : `${base}/pagina/${target}`);
@@ -40,4 +50,7 @@ const paginated = paginate(posts, page, SITE.postsPerPage, buildHref);
   ]}
   paginated={paginated}
   buildHref={buildHref}
+  categories={categories}
+  activeCategory={category.slug}
+  totalPosts={totalPosts}
 />
