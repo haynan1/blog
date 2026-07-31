@@ -120,10 +120,10 @@ numera sozinho):
 
 ## Tabelas
 
-| Coluna         | Para que serve                       |
-| -------------- | ------------------------------------ |
-| Primeira       | Comparações lado a lado              |
-| Segunda        | Dados curtos, nunca parágrafos       |
+| Coluna   | Para que serve                 |
+| -------- | ------------------------------ |
+| Primeira | Comparações lado a lado        |
+| Segunda  | Dados curtos, nunca parágrafos |
 
 ```markdown
 | Coluna   | Para que serve          |
