@@ -1,0 +1,391 @@
+---
+import { NAV_LINKS, SITE } from '~/config/site';
+import ThemeToggle from './ThemeToggle.astro';
+
+/**
+ * Header fixo que encolhe ao rolar e sai de cena ao descer.
+ *
+ * A altura vive em `--header-height` (definida em global.css) e o encolhimento
+ * é só `transform` + `padding`, nunca mudança de altura do elemento: o corpo da
+ * página nunca é remedido, então o comportamento custa zero em CLS.
+ */
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
+---
+
+<header id="site-header" class="site-header" data-state="top">
+  <a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+
+  <div class="shell site-header__inner">
+    <a href="/" class="brand" aria-label={`${SITE.name} — página inicial`}>
+      <span class="brand__mark" aria-hidden="true"></span>
+      <span class="brand__name">{SITE.name}</span>
+    </a>
+
+    <nav class="site-nav" aria-label="Navegação principal">
+      <ul class="site-nav__list">
+        {
+          NAV_LINKS.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                class="site-nav__link"
+                aria-current={isActive(link.href) ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="site-header__actions">
+      <ThemeToggle />
+      <button
+        type="button"
+        id="menu-toggle"
+        class="menu-toggle"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="Abrir menu"
+      >
+        <span class="menu-toggle__bar"></span>
+        <span class="menu-toggle__bar"></span>
+      </button>
+    </div>
+  </div>
+
+  <div id="mobile-menu" class="mobile-menu" hidden>
+    <nav class="shell mobile-menu__inner" aria-label="Navegação principal (móvel)">
+      <ul>
+        {
+          NAV_LINKS.map((link) => (
+            <li>
+              <a href={link.href} aria-current={isActive(link.href) ? 'page' : undefined}>
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: color-mix(in srgb, var(--c-paper) 82%, transparent);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid transparent;
+    transition:
+      transform 0.4s var(--ease-out-expo),
+      border-color 0.3s var(--ease-out-soft),
+      background-color 0.3s var(--ease-out-soft);
+  }
+
+  /* Rolou para baixo: o header sai inteiro de cena, devolvendo a tela ao texto. */
+  .site-header[data-state='hidden'] {
+    transform: translate3d(0, -100%, 0);
+  }
+
+  .site-header[data-state='scrolled'] {
+    border-bottom-color: var(--c-line);
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    height: var(--header-height);
+    transition: height 0.4s var(--ease-out-expo);
+  }
+
+  /* O encolhimento mexe só na altura do conteúdo interno, que é `flex` e não
+     participa do fluxo do documento — nada abaixo é reposicionado. */
+  .site-header[data-state='scrolled'] .site-header__inner,
+  .site-header[data-state='hidden'] .site-header__inner {
+    height: calc(var(--header-height) - 0.75rem);
+  }
+
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: 0.5rem;
+    z-index: 60;
+    padding: 0.625rem 1rem;
+    border-radius: 8px;
+    background-color: var(--c-ink);
+    color: var(--c-paper);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transform: translateY(-160%);
+    transition: transform 0.2s var(--ease-out-expo);
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+
+  /* ---- Marca ---- */
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex: none;
+  }
+
+  .brand__mark {
+    width: 0.5rem;
+    height: 1.35rem;
+    flex: none;
+    border-radius: 100px;
+    background: linear-gradient(to bottom, var(--c-ember), var(--c-ember-strong));
+    transition: transform 0.45s var(--ease-out-expo);
+  }
+
+  .brand:hover .brand__mark {
+    transform: scaleY(0.7);
+  }
+
+  .brand__name {
+    font-family: var(--font-display);
+    font-size: 1.1875rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--c-ink);
+  }
+
+  /* ---- Navegação ---- */
+
+  .site-nav {
+    display: none;
+    flex: 1;
+  }
+
+  .site-nav__list {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+  }
+
+  .site-nav__link {
+    position: relative;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--c-ink-muted);
+    transition: color 0.2s var(--ease-out-soft);
+  }
+
+  .site-nav__link:hover {
+    color: var(--c-ink);
+  }
+
+  .site-nav__link[aria-current='page'] {
+    color: var(--c-ink);
+  }
+
+  /* Marcador da rota ativa. `scaleX` em vez de `width` para animar no
+     compositor. */
+  .site-nav__link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.5rem;
+    height: 2px;
+    border-radius: 2px;
+    background-color: var(--c-ember);
+    transform: scaleX(0);
+    transition: transform 0.35s var(--ease-out-expo);
+  }
+
+  .site-nav__link[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+
+  .site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex: none;
+  }
+
+  /* ---- Menu móvel ---- */
+
+  .menu-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 100px;
+    border: 1px solid var(--c-line);
+    background-color: var(--c-surface);
+    cursor: pointer;
+  }
+
+  .menu-toggle__bar {
+    display: block;
+    width: 1rem;
+    height: 1.5px;
+    border-radius: 2px;
+    background-color: var(--c-ink);
+    transition: transform 0.35s var(--ease-out-expo);
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle__bar:first-child {
+    transform: translateY(3.25px) rotate(45deg);
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle__bar:last-child {
+    transform: translateY(-3.25px) rotate(-45deg);
+  }
+
+  .mobile-menu {
+    border-top: 1px solid var(--c-line);
+    background-color: var(--c-paper);
+    overflow: hidden;
+  }
+
+  .mobile-menu[hidden] {
+    display: none;
+  }
+
+  .mobile-menu__inner {
+    padding-block: 0.5rem 1.25rem;
+  }
+
+  .mobile-menu__inner ul {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-menu__inner a {
+    display: block;
+    padding-block: 0.875rem;
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--c-ink);
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  .mobile-menu__inner a[aria-current='page'] {
+    color: var(--c-ember);
+  }
+
+  @media (min-width: 900px) {
+    .site-nav {
+      display: block;
+    }
+
+    .menu-toggle,
+    .mobile-menu {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-header,
+    .site-header__inner,
+    .brand__mark,
+    .site-nav__link::after,
+    .menu-toggle__bar,
+    .skip-link {
+      transition: none;
+    }
+
+    .site-header[data-state='hidden'] {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  /** Distância mínima antes de esconder o header — evita tremida em trackpad. */
+  const HIDE_THRESHOLD = 96;
+  const DELTA_THRESHOLD = 6;
+
+  let lastY = 0;
+  let ticking = false;
+
+  const update = () => {
+    const header = document.getElementById('site-header');
+    ticking = false;
+    if (!header) return;
+
+    const y = window.scrollY;
+    const delta = y - lastY;
+
+    if (y <= 8) {
+      header.dataset['state'] = 'top';
+    } else if (Math.abs(delta) > DELTA_THRESHOLD) {
+      const menuOpen = document.getElementById('menu-toggle')?.getAttribute('aria-expanded');
+      // Nunca esconder com o menu aberto: o usuário perderia o botão de fechar.
+      header.dataset['state'] =
+        delta > 0 && y > HIDE_THRESHOLD && menuOpen !== 'true' ? 'hidden' : 'scrolled';
+    }
+
+    lastY = y;
+  };
+
+  // `scroll` dispara dezenas de vezes por segundo; o rAF garante uma leitura
+  // de layout por frame em vez de uma por evento.
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  };
+
+  const closeMenu = () => {
+    const button = document.getElementById('menu-toggle');
+    const menu = document.getElementById('mobile-menu');
+    if (!button || !menu) return;
+    button.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-label', 'Abrir menu');
+    menu.hidden = true;
+  };
+
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element | null;
+
+    if (target?.closest('#menu-toggle')) {
+      const button = document.getElementById('menu-toggle');
+      const menu = document.getElementById('mobile-menu');
+      if (!button || !menu) return;
+      const open = button.getAttribute('aria-expanded') === 'true';
+      button.setAttribute('aria-expanded', String(!open));
+      button.setAttribute('aria-label', open ? 'Abrir menu' : 'Fechar menu');
+      menu.hidden = open;
+      return;
+    }
+
+    if (target?.closest('#mobile-menu a')) closeMenu();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeMenu();
+  });
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Cada navegação começa com o header visível e o menu fechado.
+  document.addEventListener('astro:page-load', () => {
+    lastY = window.scrollY;
+    closeMenu();
+    const header = document.getElementById('site-header');
+    if (header) header.dataset['state'] = window.scrollY > 8 ? 'scrolled' : 'top';
+  });
+</script>

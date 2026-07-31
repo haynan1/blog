@@ -1,0 +1,69 @@
+---
+import type { Crumb } from '~/lib/schema';
+
+interface Props {
+  /** Sem "Início" — ele é adicionado aqui. O último item é a página atual. */
+  crumbs: Crumb[];
+}
+
+const { crumbs } = Astro.props;
+const all = [{ name: 'Início', href: '/' }, ...crumbs];
+---
+
+<nav class="breadcrumb" aria-label="Trilha de navegação">
+  <ol>
+    {
+      all.map((crumb, index) => {
+        const isLast = index === all.length - 1;
+        return (
+          <li>
+            {isLast ? (
+              // A página atual não é link: um link para onde já se está é ruído
+              // para quem navega por teclado ou leitor de tela.
+              <span aria-current="page">{crumb.name}</span>
+            ) : (
+              <a href={crumb.href} class="link-underline">
+                {crumb.name}
+              </a>
+            )}
+            {!isLast && (
+              <span class="breadcrumb__sep" aria-hidden="true">
+                /
+              </span>
+            )}
+          </li>
+        );
+      })
+    }
+  </ol>
+</nav>
+
+<style>
+  .breadcrumb ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--c-ink-subtle);
+  }
+
+  .breadcrumb li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .breadcrumb [aria-current='page'] {
+    color: var(--c-ink-muted);
+    /* Título longo não deve empurrar a trilha para uma terceira linha. */
+    max-width: 32ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .breadcrumb__sep {
+    color: var(--c-line-strong);
+  }
+</style>

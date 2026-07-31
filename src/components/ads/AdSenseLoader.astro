@@ -1,0 +1,55 @@
+---
+/**
+ * Carrega o script do AdSense e inicializa as unidades da página.
+ *
+ * Decisões:
+ *  - Só em produção. Em dev o script do Google poluiria o console, gastaria
+ *    banda e — pior — registraria impressões inválidas na conta.
+ *  - `async` + `crossorigin`, exatamente como o Google especifica.
+ *  - Uma única passada percorre todos os `<ins>` da página, em vez de um
+ *    `<script>` inline por unidade: menos código e nenhum script inline extra
+ *    para a Content Security Policy ter que liberar.
+ *  - Reinicializa em `astro:page-load`. Com View Transitions o documento não é
+ *    recarregado, então sem isso as unidades da segunda navegação em diante
+ *    ficariam vazias.
+ */
+
+const client = import.meta.env['PUBLIC_ADSENSE_CLIENT'];
+const enabled = Boolean(client) && import.meta.env.PROD;
+const scriptSrc = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`;
+---
+
+{
+  enabled && (
+    <Fragment>
+      <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin="anonymous" />
+      <script async src={scriptSrc} crossorigin="anonymous" is:inline />
+    </Fragment>
+  )
+}
+
+<script>
+  // Sem `ins.adsbygoogle` na página (dev, ou rotas sem anúncio) tudo aqui é
+  // no-op. Mantido fora do bloco condicional para que o Vite o empacote uma
+  // única vez, em vez de duplicá-lo por rota.
+  const initAds = () => {
+    const units = document.querySelectorAll<HTMLElement>('ins.adsbygoogle');
+    if (units.length === 0) return;
+
+    window.adsbygoogle = window.adsbygoogle ?? [];
+
+    for (const unit of units) {
+      // O AdSense marca a unidade depois de processá-la. Sem essa checagem,
+      // uma segunda passada dispararia "already have ads in them".
+      if (unit.dataset['adStatus'] || unit.dataset['adsbygoogleStatus']) continue;
+      try {
+        window.adsbygoogle.push({});
+      } catch {
+        /* bloqueador de anúncios ou script indisponível: segue sem anúncio */
+      }
+    }
+  };
+
+  initAds();
+  document.addEventListener('astro:page-load', initAds);
+</script>

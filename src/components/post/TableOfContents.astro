@@ -1,0 +1,148 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+
+// Só h2 e h3. Descer até h4 transforma o sumário numa segunda leitura do
+// artigo, e subir só até h2 esconde a estrutura de textos longos.
+const items = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+---
+
+{
+  items.length >= 2 && (
+    <nav class="toc" aria-labelledby="toc-title" data-toc>
+      <h2 id="toc-title" class="eyebrow toc__title">
+        Neste artigo
+      </h2>
+      <ol class="toc__list">
+        {items.map((heading) => (
+          <li class:list={['toc__item', heading.depth === 3 && 'toc__item--nested']}>
+            <a href={`#${heading.slug}`} class="toc__link" data-toc-link={heading.slug}>
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+
+<style>
+  .toc {
+    position: sticky;
+    top: calc(var(--header-height) + 2rem);
+    max-height: calc(100vh - var(--header-height) - 4rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-left: 1.25rem;
+    border-left: 1px solid var(--c-line);
+  }
+
+  .toc__title {
+    margin-bottom: 1rem;
+  }
+
+  .toc__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6875rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .toc__item--nested {
+    padding-left: 0.875rem;
+    font-size: 0.8125rem;
+  }
+
+  .toc__link {
+    display: block;
+    color: var(--c-ink-subtle);
+    transition: color 0.2s var(--ease-out-soft);
+  }
+
+  .toc__link:hover {
+    color: var(--c-ink);
+  }
+
+  .toc__link[aria-current='true'] {
+    color: var(--c-ember);
+    font-weight: 600;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toc__link {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Marca a seção que está sendo lida.
+   *
+   * Um IntersectionObserver com `rootMargin` estreito no topo se comporta como
+   * uma "linha de leitura": o título ativo é o último que cruzou logo abaixo do
+   * header. Ler `getBoundingClientRect()` no evento de scroll daria o mesmo
+   * resultado forçando reflow a cada frame.
+   */
+  let observer: IntersectionObserver | undefined;
+
+  const setupToc = () => {
+    observer?.disconnect();
+
+    const nav = document.querySelector('[data-toc]');
+    if (!nav) return;
+
+    const links = new Map<string, HTMLAnchorElement>();
+    for (const link of nav.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')) {
+      const slug = link.dataset['tocLink'];
+      if (slug) links.set(slug, link);
+    }
+
+    const headings = [...links.keys()]
+      .map((slug) => document.getElementById(slug))
+      .filter((element): element is HTMLElement => element !== null);
+
+    if (headings.length === 0) return;
+
+    const visible = new Set<string>();
+
+    const paint = () => {
+      // Entre várias seções visíveis, vence a primeira na ordem do documento.
+      const active = headings.find((heading) => visible.has(heading.id))?.id;
+
+      for (const [slug, link] of links) {
+        if (slug === active) {
+          link.setAttribute('aria-current', 'true');
+        } else {
+          link.removeAttribute('aria-current');
+        }
+      }
+    };
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            visible.add(entry.target.id);
+          } else {
+            visible.delete(entry.target.id);
+          }
+        }
+        paint();
+      },
+      { rootMargin: '-15% 0px -70% 0px', threshold: 0 },
+    );
+
+    for (const heading of headings) observer.observe(heading);
+  };
+
+  setupToc();
+  document.addEventListener('astro:page-load', setupToc);
+  document.addEventListener('astro:before-swap', () => observer?.disconnect());
+</script>

@@ -1,0 +1,75 @@
+---
+/**
+ * Barra de progresso de leitura.
+ *
+ * `position: fixed` + `transform: scaleX()` — nunca `width` — para que a
+ * animação rode no compositor e não force layout a cada frame de scroll.
+ * O elemento sai do fluxo do documento, então não participa do CLS.
+ */
+---
+
+<div class="progress" aria-hidden="true">
+  <div class="progress__bar" data-progress-bar></div>
+</div>
+
+<style>
+  .progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 60;
+    pointer-events: none;
+  }
+
+  .progress__bar {
+    height: 100%;
+    background: linear-gradient(to right, var(--c-ember), var(--c-ember-strong));
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .progress {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  let ticking = false;
+  let article: HTMLElement | null = null;
+  let bar: HTMLElement | null = null;
+
+  const paint = () => {
+    ticking = false;
+    if (!article || !bar) return;
+
+    const start = article.offsetTop;
+    // O progresso é medido contra o artigo, não contra a página: rodapé e
+    // posts relacionados não deveriam contar como "texto lido".
+    const distance = article.offsetHeight - window.innerHeight;
+    if (distance <= 0) return;
+
+    const scrolled = (window.scrollY - start) / distance;
+    bar.style.transform = `scaleX(${Math.min(1, Math.max(0, scrolled))})`;
+  };
+
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(paint);
+  };
+
+  const setup = () => {
+    bar = document.querySelector<HTMLElement>('[data-progress-bar]');
+    article = document.querySelector<HTMLElement>('[data-article-body]');
+    if (bar && article) paint();
+  };
+
+  setup();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  document.addEventListener('astro:page-load', setup);
+</script>

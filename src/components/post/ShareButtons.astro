@@ -1,0 +1,119 @@
+---
+import { SITE } from '~/config/site';
+import { absoluteUrl } from '~/lib/format';
+
+interface Props {
+  title: string;
+  path: string;
+}
+
+const { title, path } = Astro.props;
+
+const url = absoluteUrl(path);
+const encodedUrl = encodeURIComponent(url);
+const encodedTitle = encodeURIComponent(title);
+
+/**
+ * Links de compartilhamento como âncoras normais — nenhum SDK de rede social é
+ * carregado. Os widgets oficiais custam centenas de KB e instalam rastreadores
+ * de terceiros que teríamos que declarar na política de privacidade.
+ *
+ * WhatsApp vem primeiro porque, no Brasil, é de longe o canal que mais traz
+ * tráfego de volta para conteúdo em português.
+ */
+const targets = [
+  { name: 'WhatsApp', href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}` },
+  { name: 'X', href: `https://x.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}` },
+  { name: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}` },
+  {
+    name: 'E-mail',
+    href: `mailto:?subject=${encodedTitle}&body=${encodedTitle}%0A%0A${encodedUrl}%0A%0AVia ${SITE.name}`,
+  },
+];
+---
+
+<div class="share">
+  <h2 class="eyebrow share__title">Compartilhar</h2>
+  <ul class="share__list">
+    {
+      targets.map((target) => (
+        <li>
+          <a class="pill" href={target.href} target="_blank" rel="noopener noreferrer nofollow">
+            {target.name}
+          </a>
+        </li>
+      ))
+    }
+    <li>
+      <button type="button" class="pill share__copy" data-share-url={url}>
+        <span data-copy-label>Copiar link</span>
+      </button>
+    </li>
+  </ul>
+</div>
+
+<style>
+  .share {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .share__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .share__copy {
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .share__copy:hover {
+    border-color: var(--c-ember);
+    color: var(--c-ember);
+    background-color: var(--c-ember-wash);
+  }
+
+  .share__copy[data-copied='true'] {
+    border-color: var(--c-moss);
+    color: var(--c-moss);
+    background-color: var(--c-moss-wash);
+  }
+</style>
+
+<script>
+  const FEEDBACK_MS = 2000;
+
+  document.addEventListener('click', async (event) => {
+    const target = event.target as Element | null;
+    const button = target?.closest<HTMLButtonElement>('.share__copy');
+    if (!button) return;
+
+    const url = button.dataset['shareUrl'];
+    const label = button.querySelector<HTMLElement>('[data-copy-label]');
+    if (!url || !label) return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      label.textContent = 'Link copiado';
+      button.dataset['copied'] = 'true';
+      setTimeout(() => {
+        label.textContent = 'Copiar link';
+        delete button.dataset['copied'];
+      }, FEEDBACK_MS);
+    } catch {
+      // `navigator.clipboard` exige contexto seguro e pode ser negado pelo
+      // usuário. Em vez de falhar em silêncio, seleciona a URL para que dê
+      // para copiar no braço.
+      label.textContent = url;
+      const range = document.createRange();
+      range.selectNodeContents(label);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+  });
+</script>

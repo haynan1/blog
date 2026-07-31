@@ -1,0 +1,320 @@
+---
+import { render } from 'astro:content';
+import { Image } from 'astro:assets';
+
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Breadcrumb from '~/components/ui/Breadcrumb.astro';
+import TableOfContents from '~/components/post/TableOfContents.astro';
+import ShareButtons from '~/components/post/ShareButtons.astro';
+import ReadingProgress from '~/components/post/ReadingProgress.astro';
+import PostCard from '~/components/post/PostCard.astro';
+import AdSlot from '~/components/ads/AdSlot.astro';
+import { getCategory } from '~/config/categories';
+import { getPosts, getRelatedPosts, type Post } from '~/lib/posts';
+import { formatDate, toISO } from '~/lib/format';
+import { articleNode, breadcrumbNode, buildGraph } from '~/lib/schema';
+import { SITE } from '~/config/site';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post, posts },
+  }));
+}
+
+interface Props {
+  post: Post;
+  posts: Post[];
+}
+
+const { post, posts } = Astro.props;
+const { Content, headings } = await render(post);
+
+const category = getCategory(post.data.category);
+const related = getRelatedPosts(post, posts);
+
+const crumbs = [
+  { name: 'Blog', href: '/blog' },
+  { name: category.name, href: `/categoria/${category.slug}` },
+  { name: post.data.title, href: post.href },
+];
+
+const jsonLd = buildGraph(
+  articleNode(post, post.data.image.src),
+  breadcrumbNode([{ name: 'Início', href: '/' }, ...crumbs]),
+);
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  image={post.data.image.src}
+  imageAlt={post.data.imageAlt}
+  type="article"
+  publishedTime={post.data.pubDate}
+  modifiedTime={post.data.updatedDate ?? post.data.pubDate}
+  jsonLd={jsonLd}
+>
+  <ReadingProgress />
+
+  <article class="post">
+    <header class="post__header shell shell-reading">
+      <Breadcrumb crumbs={crumbs} />
+
+      <a href={`/categoria/${category.slug}`} class="pill post__category">{category.name}</a>
+
+      <h1 class="post__title">{post.data.title}</h1>
+      <p class="post__lead">{post.data.description}</p>
+
+      <div class="post__meta">
+        <span>Por {post.data.author ?? SITE.author.name}</span>
+        <span aria-hidden="true">·</span>
+        <time datetime={toISO(post.data.pubDate)}>{formatDate(post.data.pubDate)}</time>
+        <span aria-hidden="true">·</span>
+        <span>{post.readingTime.label}</span>
+        {
+          post.data.updatedDate && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>
+                Atualizado em{' '}
+                <time datetime={toISO(post.data.updatedDate)}>
+                  {formatDate(post.data.updatedDate)}
+                </time>
+              </span>
+            </>
+          )
+        }
+      </div>
+    </header>
+
+    <figure class="post__cover shell">
+      <Image
+        src={post.data.image}
+        alt={post.data.imageAlt}
+        widths={[640, 960, 1440, 1920]}
+        sizes="(min-width: 1200px) 1140px, 100vw"
+        loading="eager"
+        fetchpriority="high"
+        decoding="sync"
+        class="post__cover-image"
+      />
+      {post.data.imageCredit && <figcaption>{post.data.imageCredit}</figcaption>}
+    </figure>
+
+    <div class="post__layout shell">
+      {
+        /* O sumário fica antes do corpo no DOM para que o teclado o alcance
+          primeiro; o CSS o coloca à direita no desktop e o esconde no móvel,
+          onde uma coluna lateral não cabe. */
+      }
+      <aside class="post__aside">
+        <TableOfContents headings={headings} />
+      </aside>
+
+      <div class="post__body" data-article-body>
+        <div class="prose prose-editorial">
+          <Content />
+        </div>
+
+        {
+          post.data.sources && post.data.sources.length > 0 && (
+            <section class="sources" aria-labelledby="sources-title">
+              <h2 id="sources-title" class="eyebrow">
+                Fontes
+              </h2>
+              <ol>
+                {post.data.sources.map((source) => (
+                  <li>
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="link-underline"
+                    >
+                      {source.label}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )
+        }
+
+        <div class="post__tags">
+          {post.data.tags.map((tag) => <span class="pill">#{tag}</span>)}
+        </div>
+
+        <hr class="rule post__rule" />
+
+        <ShareButtons title={post.data.title} path={post.href} />
+
+        <AdSlot
+          slot={import.meta.env['PUBLIC_ADSENSE_SLOT_FOOTER']}
+          position="footer"
+          class="post__ad"
+        />
+      </div>
+    </div>
+
+    {
+      related.length > 0 && (
+        <section class="related shell" aria-labelledby="related-title">
+          <h2 id="related-title" class="related__title">
+            Continue lendo
+          </h2>
+          <div class="related__grid">
+            {related.map((item) => (
+              <PostCard post={item} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>
+
+<style>
+  .post__header {
+    padding-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+
+  .post__category {
+    color: var(--c-ember);
+    border-color: var(--c-ember);
+    background-color: var(--c-ember-wash);
+  }
+
+  .post__title {
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+    letter-spacing: var(--text-display--letter-spacing);
+    font-weight: 700;
+  }
+
+  .post__lead {
+    font-family: var(--font-serif);
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+    color: var(--c-ink-muted);
+    max-width: 46ch;
+  }
+
+  .post__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--c-ink-subtle);
+  }
+
+  .post__cover {
+    margin-top: 3rem;
+  }
+
+  .post__cover-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--c-line);
+  }
+
+  .post__cover figcaption {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--c-ink-subtle);
+    text-align: center;
+  }
+
+  .post__layout {
+    display: grid;
+    gap: 3rem;
+    margin-top: 3.5rem;
+  }
+
+  .post__aside {
+    display: none;
+  }
+
+  .post__body {
+    min-width: 0;
+  }
+
+  .sources {
+    margin-top: 3.5rem;
+    padding: 1.75rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-card);
+    background-color: var(--c-surface-2);
+  }
+
+  .sources ol {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+    color: var(--c-ink-muted);
+    list-style: decimal;
+    padding-left: 1.25rem;
+  }
+
+  .post__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 2.5rem;
+  }
+
+  .post__rule {
+    margin-block: 2.5rem;
+  }
+
+  .post__ad {
+    margin-top: 3rem;
+  }
+
+  .related {
+    margin-top: 6rem;
+  }
+
+  .related__title {
+    font-size: var(--text-heading);
+    letter-spacing: var(--text-heading--letter-spacing);
+    margin-bottom: 2rem;
+  }
+
+  .related__grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  }
+
+  /* O sumário lateral só aparece quando há largura para ele sem espremer a
+     coluna de texto abaixo de ~65 caracteres. */
+  @media (min-width: 1100px) {
+    .post__layout {
+      grid-template-columns: minmax(0, var(--container-editorial)) 15rem;
+      justify-content: center;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    .post__aside {
+      display: block;
+      /* Coluna à direita, mas antes no DOM: ordem visual sem custo de tabulação. */
+      order: 2;
+    }
+
+    .post__body {
+      order: 1;
+    }
+  }
+</style>

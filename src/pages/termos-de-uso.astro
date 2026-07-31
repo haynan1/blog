@@ -1,0 +1,143 @@
+---
+import PageLayout from '~/layouts/PageLayout.astro';
+import { SITE } from '~/config/site';
+
+const updatedAt = '31 de julho de 2026';
+const host = SITE.url.replace(/^https?:\/\//, '');
+---
+
+<PageLayout
+  title="Termos de Uso"
+  eyebrow="Documento legal"
+  description={`Condições de uso do ${SITE.name}: direitos autorais, uso permitido do conteúdo, limitação de responsabilidade e foro.`}
+  updatedAt={updatedAt}
+  noindex
+>
+  <div class="prose prose-editorial">
+    <p>
+      Ao acessar o <strong>{SITE.name}</strong> ({host}), você concorda com os termos abaixo. Se não
+      concordar com algum deles, não utilize o site.
+    </p>
+
+    <h2>1. Objeto</h2>
+
+    <p>
+      Este site publica conteúdo editorial — ensaios, guias e análises — de acesso livre e gratuito.
+      Não vendemos produtos, não prestamos consultoria e não mantemos área de assinantes.
+    </p>
+
+    <h2>2. Propriedade intelectual</h2>
+
+    <p>
+      Todo o conteúdo publicado (textos, imagens originais, identidade visual e código do site) é
+      protegido pela Lei nº 9.610/1998 e pertence ao {SITE.author.name}, salvo indicação expressa em
+      contrário.
+    </p>
+
+    <p>Você <strong>pode</strong>, sem pedir autorização:</p>
+
+    <ul>
+      <li>ler, imprimir e salvar artigos para uso pessoal;</li>
+      <li>
+        citar trechos curtos em trabalhos próprios, desde que credite o autor e inclua link para a
+        página original;
+      </li>
+      <li>compartilhar o link de qualquer artigo em qualquer plataforma.</li>
+    </ul>
+
+    <p>Você <strong>não pode</strong>, sem autorização prévia por escrito:</p>
+
+    <ul>
+      <li>republicar artigos na íntegra ou em parte substancial, em qualquer meio;</li>
+      <li>traduzir e publicar o conteúdo em outro idioma;</li>
+      <li>
+        usar os textos para treinar modelos de linguagem ou gerar conteúdo derivado em escala;
+      </li>
+      <li>reproduzir a identidade visual, o nome ou o layout do site.</li>
+    </ul>
+
+    <p>
+      Pedidos de licenciamento: <a href={`mailto:${SITE.author.email}`}>{SITE.author.email}</a>.
+    </p>
+
+    <h2>3. Uso aceitável</h2>
+
+    <p>Ao usar este site, você se compromete a não:</p>
+
+    <ul>
+      <li>tentar obter acesso não autorizado a qualquer parte do site ou da hospedagem;</li>
+      <li>
+        executar varreduras automatizadas, raspagem em massa ou qualquer atividade que degrade o
+        serviço para outros visitantes;
+      </li>
+      <li>usar o formulário de contato para spam, phishing ou envio de conteúdo ilícito;</li>
+      <li>inserir código malicioso ou explorar vulnerabilidades.</li>
+    </ul>
+
+    <h2>4. Publicidade</h2>
+
+    <p>
+      O site é sustentado por anúncios do Google AdSense. Não temos controle editorial sobre quais
+      anúncios são exibidos a cada visitante, e a presença de um anúncio não representa endosso,
+      recomendação ou verificação do produto ou serviço anunciado. Qualquer transação realizada com
+      um anunciante é entre você e ele.
+    </p>
+
+    <p>
+      O tratamento de dados relacionado à publicidade está descrito na{' '}
+      <a href="/politica-de-privacidade">Política de Privacidade</a>.
+    </p>
+
+    <h2>5. Isenção de responsabilidade</h2>
+
+    <p>
+      O conteúdo tem finalidade informativa. Apesar do cuidado editorial, não garantimos que todo
+      artigo esteja atualizado, completo ou livre de erro — tecnologia e mercado mudam depois da
+      publicação.
+    </p>
+
+    <p>
+      Nada aqui constitui aconselhamento profissional, jurídico, financeiro, contábil ou médico.
+      Decisões tomadas com base neste conteúdo são de responsabilidade exclusiva de quem as toma.
+      Consulte um profissional habilitado antes de agir sobre assuntos que envolvam dinheiro,
+      contratos ou saúde.
+    </p>
+
+    <h2>6. Correções</h2>
+
+    <p>
+      Erros factuais são corrigidos assim que verificados, com a data da revisão registrada no topo
+      do artigo. Para apontar um erro, use a <a href="/contato">página de contato</a>.
+    </p>
+
+    <h2>7. Links para terceiros</h2>
+
+    <p>
+      Citamos e linkamos fontes externas. Não controlamos esses sites nem respondemos por seu
+      conteúdo, disponibilidade ou práticas.
+    </p>
+
+    <h2>8. Disponibilidade</h2>
+
+    <p>
+      O site é oferecido "como está". Não garantimos disponibilidade ininterrupta e podemos alterar,
+      suspender ou descontinuar qualquer parte dele a qualquer momento, sem aviso prévio.
+    </p>
+
+    <h2>9. Alterações nestes termos</h2>
+
+    <p>
+      Estes termos podem ser atualizados. A versão vigente é sempre a publicada nesta página, com a
+      data de revisão indicada no topo. O uso continuado do site após uma alteração significa
+      concordância com a nova versão.
+    </p>
+
+    <h2>10. Lei aplicável e foro</h2>
+
+    <p>
+      Estes termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da
+      comarca de domicílio do responsável pelo site para dirimir qualquer controvérsia, com renúncia
+      a qualquer outro, por mais privilegiado que seja.
+    </p>
+  </div>
+</PageLayout>

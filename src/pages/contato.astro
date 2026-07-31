@@ -1,0 +1,294 @@
+---
+import PageLayout from '~/layouts/PageLayout.astro';
+import { SITE } from '~/config/site';
+
+/**
+ * Formulário de contato via Formspree.
+ *
+ * Sem backend próprio: a hospedagem é Apache estático, e manter um endpoint PHP
+ * recebendo POST anônimo significaria manter um alvo de spam e de injeção com
+ * zero benefício. O Formspree resolve o envio, o anti-spam e o arquivamento.
+ *
+ * O envio é feito por `fetch` para que o usuário nunca saia da página. Sem JS,
+ * o `action`/`method` do próprio <form> continua funcionando — só a resposta
+ * passa a ser a página do Formspree.
+ */
+
+const endpoint = import.meta.env['PUBLIC_FORMSPREE_ENDPOINT'];
+---
+
+<PageLayout
+  title="Contato"
+  eyebrow="Fale com a gente"
+  description={`Envie uma correção, uma sugestão de pauta ou uma discordância para a equipe do ${SITE.name}.`}
+>
+  <div class="prose prose-editorial contact__intro">
+    <p>
+      Correções factuais têm prioridade e são respondidas primeiro. Sugestões de pauta são lidas
+      todas, mesmo quando não viram artigo. Propostas de publieditorial e de troca de links não são
+      respondidas.
+    </p>
+  </div>
+
+  {
+    endpoint ? (
+      <form class="contact-form" data-contact-form action={endpoint} method="POST">
+        <div class="field">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" name="nome" required autocomplete="name" maxlength="120" />
+        </div>
+
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            autocomplete="email"
+            maxlength="180"
+          />
+        </div>
+
+        <div class="field">
+          <label for="assunto">Assunto</label>
+          <select id="assunto" name="assunto" required>
+            <option value="correcao">Correção em um artigo</option>
+            <option value="pauta">Sugestão de pauta</option>
+            <option value="imprensa">Imprensa</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="mensagem">Mensagem</label>
+          <textarea id="mensagem" name="mensagem" rows="7" required maxlength="4000" />
+        </div>
+
+        {/* Armadilha para bots: um humano nunca vê nem tabula até este campo,
+            então qualquer valor preenchido identifica envio automático. */}
+        <div class="honeypot" aria-hidden="true">
+          <label for="site">Não preencha este campo</label>
+          <input type="text" id="site" name="_gotcha" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <div class="contact-form__footer">
+          <button type="submit" class="btn btn-primary" data-submit>
+            Enviar mensagem
+          </button>
+          {/* `aria-live` faz o leitor de tela anunciar o resultado sem que o
+              foco precise sair do botão. */}
+          <p class="contact-form__status" data-status role="status" aria-live="polite" />
+        </div>
+
+        <p class="contact-form__privacy">
+          Ao enviar, seus dados são processados pelo Formspree apenas para nos entregar esta
+          mensagem. Não entram em lista de e-mail. Veja a{' '}
+          <a href="/politica-de-privacidade">Política de Privacidade</a>.
+        </p>
+      </form>
+    ) : (
+      <div class="contact-fallback">
+        <p>
+          O formulário ainda não foi configurado nesta instalação. Escreva direto para{' '}
+          <a href={`mailto:${SITE.author.email}`} class="link-underline">
+            {SITE.author.email}
+          </a>
+          .
+        </p>
+        <p class="contact-fallback__hint">
+          Para ativá-lo, defina <code>PUBLIC_FORMSPREE_ENDPOINT</code> no arquivo <code>.env</code>{' '}
+          e gere o site novamente.
+        </p>
+      </div>
+    )
+  }
+</PageLayout>
+
+<style>
+  .contact__intro {
+    margin-bottom: 3rem;
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .field label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--c-ink-muted);
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 0.8125rem 1rem;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--c-ink);
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-radius: 10px;
+    transition:
+      border-color 0.2s var(--ease-out-soft),
+      background-color 0.2s var(--ease-out-soft);
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 9rem;
+    line-height: 1.6;
+  }
+
+  .field input:hover,
+  .field select:hover,
+  .field textarea:hover {
+    border-color: var(--c-line-strong);
+  }
+
+  .field input:focus-visible,
+  .field select:focus-visible,
+  .field textarea:focus-visible {
+    border-color: var(--c-ember);
+  }
+
+  /* Só marca o campo como inválido depois de o usuário ter interagido — um
+     formulário todo vermelho ao carregar é hostil. */
+  .field input:user-invalid,
+  .field textarea:user-invalid {
+    border-color: var(--c-ember);
+  }
+
+  .honeypot {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .contact-form__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .contact-form__status {
+    font-size: 0.875rem;
+    color: var(--c-ink-muted);
+  }
+
+  .contact-form__status[data-state='error'] {
+    color: var(--c-ember);
+  }
+
+  .contact-form__status[data-state='success'] {
+    color: var(--c-moss);
+    font-weight: 600;
+  }
+
+  .contact-form__privacy {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--c-ink-subtle);
+  }
+
+  .contact-form__privacy a {
+    color: var(--c-ink-muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .contact-fallback {
+    padding: 2rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-card);
+    background-color: var(--c-surface-2);
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+
+  .contact-fallback__hint {
+    margin-top: 1rem;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    color: var(--c-ink-subtle);
+  }
+
+  .contact-fallback code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    background-color: var(--c-surface-inset);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .field input,
+    .field select,
+    .field textarea {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const setupContactForm = () => {
+    const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+    if (!form || form.dataset['bound'] === 'true') return;
+    form.dataset['bound'] = 'true';
+
+    const status = form.querySelector<HTMLElement>('[data-status]');
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+
+    form.addEventListener('submit', async (event) => {
+      if (!status || !submit) return;
+      event.preventDefault();
+
+      submit.disabled = true;
+      submit.textContent = 'Enviando…';
+      status.textContent = '';
+      delete status.dataset['state'];
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) throw new Error(String(response.status));
+
+        form.reset();
+        status.textContent = 'Mensagem enviada. Obrigado — respondemos em até dois dias úteis.';
+        status.dataset['state'] = 'success';
+      } catch {
+        status.textContent =
+          'Não foi possível enviar agora. Tente de novo ou escreva direto para o nosso e-mail.';
+        status.dataset['state'] = 'error';
+      } finally {
+        submit.disabled = false;
+        submit.textContent = 'Enviar mensagem';
+      }
+    });
+  };
+
+  setupContactForm();
+  document.addEventListener('astro:page-load', setupContactForm);
+</script>

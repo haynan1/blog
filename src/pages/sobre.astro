@@ -1,0 +1,133 @@
+---
+import PageLayout from '~/layouts/PageLayout.astro';
+import { SITE } from '~/config/site';
+import { CATEGORIES } from '~/config/categories';
+import { getPosts } from '~/lib/posts';
+
+const posts = await getPosts();
+const totalWords = posts.reduce((sum, post) => sum + post.readingTime.words, 0);
+
+const numberFormat = new Intl.NumberFormat('pt-BR');
+
+const stats = [
+  { value: numberFormat.format(posts.length), label: 'artigos publicados' },
+  { value: numberFormat.format(totalWords), label: 'palavras escritas' },
+  { value: String(CATEGORIES.length), label: 'áreas cobertas' },
+];
+---
+
+<PageLayout
+  title="Sobre"
+  eyebrow="Quem escreve isso"
+  description={`Quem está por trás do ${SITE.name}, o que este site publica e por que ele existe.`}
+>
+  <div class="prose prose-editorial">
+    <p>
+      O <strong>{SITE.name}</strong> existe por um motivo simples: a maior parte do que se lê hoje sobre
+      tecnologia e negócios é uma reciclagem apressada do que outra pessoa já tinha publicado apressadamente.
+      O ciclo se alimenta de si mesmo, e no fim ninguém aprendeu nada.
+    </p>
+
+    <p>
+      A proposta aqui é o oposto. Menos textos, mais tempo em cada um. Nenhum artigo entra no ar sem
+      que a pergunta central tenha sido levada a sério até o fim — inclusive quando a resposta
+      honesta é desconfortável, ou quando contradiz o que todo mundo está repetindo naquela semana.
+    </p>
+
+    <h2>O que você encontra aqui</h2>
+
+    <p>
+      Publicamos ensaios e guias em quatro frentes, sempre com o mesmo critério: o texto precisa ser
+      útil para alguém que vai <em>tomar uma decisão</em>, não apenas para quem quer se sentir
+      informado.
+    </p>
+
+    <ul>
+      {
+        CATEGORIES.map((category) => (
+          <li>
+            <a href={`/categoria/${category.slug}`}>
+              <strong>{category.name}</strong>
+            </a>{' '}
+            — {category.description}
+          </li>
+        ))
+      }
+    </ul>
+
+    <h2>Como este site é feito</h2>
+
+    <p>
+      Todo o conteúdo é original e escrito por gente. Quando usamos dados de terceiros, a fonte é
+      citada e linkada ao final do artigo — dá para conferir tudo. Quando erramos, corrigimos o
+      texto e registramos a data da atualização no topo, em vez de editar em silêncio.
+    </p>
+
+    <p>
+      O site é estático: nenhum banco de dados, nenhum rastreador de comportamento, nenhum script de
+      rede social. As fontes tipográficas são servidas do nosso próprio domínio, então nem isso vira
+      uma requisição para o Google. A única exceção são os anúncios que sustentam o projeto — e eles
+      estão descritos em detalhe na{' '}
+      <a href="/politica-de-privacidade">Política de Privacidade</a>.
+    </p>
+
+    <h2>Como isso se paga</h2>
+
+    <p>
+      Publicidade display, via Google AdSense. Não fazemos publieditorial, não aceitamos pagamento
+      para escrever sobre um produto e não usamos links de afiliado sem sinalizar. Se algum dia isso
+      mudar, a mudança vai estar escrita nesta página antes de aparecer em qualquer artigo.
+    </p>
+
+    <h2>Falar com a gente</h2>
+
+    <p>
+      Correções, sugestões de pauta e discordâncias bem argumentadas são bem-vindas — em especial as
+      últimas. Use a <a href="/contato">página de contato</a> ou escreva direto para{' '}
+      <a href={`mailto:${SITE.author.email}`}>{SITE.author.email}</a>.
+    </p>
+  </div>
+
+  <dl class="stats">
+    {
+      stats.map((stat) => (
+        <div class="stats__item" data-reveal>
+          <dt class="stats__label">{stat.label}</dt>
+          <dd class="stats__value">{stat.value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</PageLayout>
+
+<style>
+  .stats {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--c-line);
+  }
+
+  .stats__item {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.375rem;
+  }
+
+  .stats__value {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 1.4rem + 2.2vw, 3rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-ember);
+  }
+
+  .stats__label {
+    font-size: 0.8125rem;
+    color: var(--c-ink-subtle);
+  }
+</style>

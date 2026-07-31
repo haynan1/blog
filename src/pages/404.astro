@@ -1,0 +1,106 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PostCard from '~/components/post/PostCard.astro';
+import { getPosts } from '~/lib/posts';
+
+/**
+ * 404 personalizada.
+ *
+ * O Apache a serve via `ErrorDocument` (ver public/.htaccess). Como é uma
+ * página estática comum, ela carrega o mesmo header, rodapé e navegação — o
+ * visitante que caiu num link quebrado continua dentro do site em vez de bater
+ * numa parede branca do servidor.
+ */
+
+const latest = (await getPosts()).slice(0, 3);
+---
+
+<BaseLayout
+  title="Página não encontrada"
+  description="O endereço acessado não existe ou foi movido."
+  noindex
+>
+  <section class="notfound shell">
+    <p class="notfound__code" aria-hidden="true">404</p>
+    <h1 class="notfound__title">Esta página não existe</h1>
+    <p class="notfound__text">
+      O endereço pode ter sido digitado errado, o artigo pode ter mudado de lugar, ou o link que te
+      trouxe até aqui já estava quebrado. Nenhum dos três é culpa sua.
+    </p>
+
+    <div class="notfound__actions">
+      <a href="/" class="btn btn-primary">Voltar ao início</a>
+      <a href="/blog" class="btn btn-ghost">Ver todos os artigos</a>
+    </div>
+  </section>
+
+  {
+    latest.length > 0 && (
+      <section class="notfound__suggestions shell" aria-labelledby="suggestions-title">
+        <h2 id="suggestions-title" class="eyebrow">
+          Enquanto isso, os mais recentes
+        </h2>
+        <div class="notfound__grid">
+          {latest.map((post) => (
+            <PostCard post={post} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .notfound {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding-top: clamp(3rem, 1rem + 7vw, 6rem);
+    max-width: var(--container-reading);
+  }
+
+  .notfound__code {
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 3rem + 12vw, 11rem);
+    font-weight: 800;
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    color: var(--c-ember);
+    /* Recuo ótico: o zero à esquerda alinha visualmente com o texto abaixo. */
+    margin-left: -0.06em;
+  }
+
+  .notfound__title {
+    font-size: var(--text-title);
+    line-height: var(--text-title--line-height);
+    letter-spacing: var(--text-title--letter-spacing);
+    font-weight: 700;
+  }
+
+  .notfound__text {
+    font-family: var(--font-serif);
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+    color: var(--c-ink-muted);
+    max-width: 46ch;
+  }
+
+  .notfound__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .notfound__suggestions {
+    margin-top: 5rem;
+  }
+
+  .notfound__grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  }
+</style>

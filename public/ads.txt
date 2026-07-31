@@ -1,0 +1,20 @@
+# ads.txt — Authorized Digital Sellers (IAB Tech Lab)
+#
+# Declara quem tem permissão para vender o inventário publicitário deste
+# domínio. Sem este arquivo, parte dos compradores programáticos simplesmente
+# não dá lance no seu inventário, e a receita cai — o AdSense avisa sobre isso
+# no painel como "problemas de ads.txt".
+#
+# COMO CONFIGURAR
+# 1. Entre no AdSense → Anúncios → ads.txt.
+# 2. Copie o publisher ID (formato pub-0000000000000000, SEM o prefixo "ca-").
+# 3. Substitua a linha abaixo e faça o upload deste arquivo para public_html/.
+# 4. Confirme em https://www.seudominio.com.br/ads.txt — precisa abrir como
+#    texto puro.
+#
+# Formato: <domínio do sistema de anúncios>, <ID do publisher>, <DIRECT|RESELLER>, <ID da autoridade certificadora>
+#
+# A linha abaixo está com um ID de exemplo e PRECISA ser trocada antes de
+# solicitar a aprovação no AdSense.
+
+google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0

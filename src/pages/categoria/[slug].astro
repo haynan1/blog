@@ -1,0 +1,52 @@
+---
+import ArchiveLayout from '~/layouts/ArchiveLayout.astro';
+import { CATEGORIES, type Category } from '~/config/categories';
+import { getPosts, paginate, type Post } from '~/lib/posts';
+import { SITE } from '~/config/site';
+import { breadcrumbNode, buildGraph, collectionPageNode } from '~/lib/schema';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+
+  // Toda categoria declarada ganha rota, mesmo sem post ainda: o link no rodapé
+  // nunca aponta para um 404.
+  return CATEGORIES.map((category) => ({
+    params: { slug: category.slug },
+    props: {
+      category,
+      posts: posts.filter((post) => post.data.category === category.slug),
+    },
+  }));
+}
+
+interface Props {
+  category: Category;
+  posts: Post[];
+}
+
+const { category, posts } = Astro.props;
+
+const base = `/categoria/${category.slug}`;
+const buildHref = (page: number) => (page === 1 ? base : `${base}/pagina/${page}`);
+const paginated = paginate(posts, 1, SITE.postsPerPage, buildHref);
+
+const crumbs = [
+  { name: 'Blog', href: '/blog' },
+  { name: category.name, href: base },
+];
+
+const jsonLd = buildGraph(
+  collectionPageNode(category.name, category.description, base),
+  breadcrumbNode([{ name: 'Início', href: '/' }, ...crumbs]),
+);
+---
+
+<ArchiveLayout
+  eyebrow="Categoria"
+  title={category.name}
+  description={category.description}
+  crumbs={crumbs}
+  paginated={paginated}
+  buildHref={buildHref}
+  jsonLd={jsonLd}
+/>

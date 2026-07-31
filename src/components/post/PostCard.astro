@@ -1,0 +1,217 @@
+---
+import { Image } from 'astro:assets';
+
+import type { Post } from '~/lib/posts';
+import { getCategory } from '~/config/categories';
+import { formatDateShort, toISO } from '~/lib/format';
+
+interface Props {
+  post: Post;
+  /** `feature` ocupa a largura toda com imagem lateral; `compact` dispensa imagem. */
+  variant?: 'default' | 'feature' | 'compact';
+  /** Só a primeira dobra deve carregar com prioridade. */
+  priority?: boolean;
+  /** Nível do título no documento — mantém a hierarquia correta por página. */
+  headingLevel?: 2 | 3;
+}
+
+const { post, variant = 'default', priority = false, headingLevel = 3 } = Astro.props;
+
+const category = getCategory(post.data.category);
+const Heading = `h${headingLevel}` as 'h2' | 'h3';
+
+// `sizes` real evita baixar uma imagem de 1200px para um card de 380px.
+const sizes = {
+  feature: '(min-width: 1024px) 640px, 100vw',
+  default: '(min-width: 1024px) 400px, (min-width: 640px) 45vw, 100vw',
+  compact: '96px',
+}[variant];
+---
+
+<article class:list={['card', 'post-card', `post-card--${variant}`]} data-reveal>
+  {
+    variant !== 'compact' && (
+      <div class="post-card__media">
+        <Image
+          src={post.data.image}
+          alt={post.data.imageAlt}
+          widths={variant === 'feature' ? [480, 800, 1280] : [320, 480, 800]}
+          sizes={sizes}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchpriority={priority ? 'high' : 'auto'}
+          decoding={priority ? 'sync' : 'async'}
+          class="post-card__image"
+        />
+      </div>
+    )
+  }
+
+  <div class="post-card__body">
+    <div class="post-card__meta">
+      <a href={`/categoria/${category.slug}`} class="post-card__category">{category.name}</a>
+      <span aria-hidden="true">·</span>
+      <time datetime={toISO(post.data.pubDate)}>{formatDateShort(post.data.pubDate)}</time>
+      <span aria-hidden="true">·</span>
+      <span>{post.readingTime.label}</span>
+    </div>
+
+    <Heading class="post-card__title">
+      {
+        /* `card-link` estende a área clicável ao card inteiro sem aninhar
+          âncoras — o link acessível continua sendo o título. */
+      }
+      <a href={post.href} class="card-link">{post.data.title}</a>
+    </Heading>
+
+    {variant !== 'compact' && <p class="post-card__excerpt">{post.data.description}</p>}
+  </div>
+</article>
+
+<style>
+  .post-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .post-card__media {
+    overflow: hidden;
+    background-color: var(--c-surface-2);
+    /* Proporção fixa: o espaço da imagem existe antes dela chegar. */
+    aspect-ratio: 16 / 10;
+  }
+
+  .post-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s var(--ease-out-expo);
+  }
+
+  :global(.motion) .post-card:hover .post-card__image {
+    transform: scale(1.04);
+  }
+
+  .post-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.375rem;
+    flex: 1;
+  }
+
+  .post-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--c-ink-subtle);
+  }
+
+  .post-card__category {
+    /* z-index acima do pseudo-elemento do card-link para continuar clicável. */
+    position: relative;
+    z-index: 1;
+    font-weight: 600;
+    color: var(--c-ember);
+  }
+
+  .post-card__category:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .post-card__title {
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .post-card__title a {
+    color: var(--c-ink);
+    transition: color 0.2s var(--ease-out-soft);
+  }
+
+  .post-card:hover .post-card__title a {
+    color: var(--c-ember);
+  }
+
+  .post-card__excerpt {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--c-ink-muted);
+  }
+
+  /* ---- Variante em destaque ---- */
+
+  .post-card--feature .post-card__media {
+    aspect-ratio: 16 / 9;
+  }
+
+  .post-card--feature .post-card__title {
+    font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  }
+
+  .post-card--feature .post-card__excerpt {
+    font-size: 1.0625rem;
+  }
+
+  .post-card--feature .post-card__body {
+    padding: 1.75rem;
+    gap: 1rem;
+  }
+
+  @media (min-width: 860px) {
+    .post-card--feature {
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .post-card--feature .post-card__media {
+      flex: 1 1 56%;
+      aspect-ratio: auto;
+    }
+
+    .post-card--feature .post-card__body {
+      flex: 1 1 44%;
+      justify-content: center;
+      padding: 2.5rem;
+    }
+  }
+
+  /* ---- Variante compacta ---- */
+
+  .post-card--compact {
+    border: 0;
+    border-radius: 0;
+    border-bottom: 1px solid var(--c-line);
+    background: transparent;
+  }
+
+  .post-card--compact:hover {
+    box-shadow: none;
+    transform: none;
+  }
+
+  .post-card--compact .post-card__body {
+    padding: 1.125rem 0;
+    gap: 0.5rem;
+  }
+
+  .post-card--compact .post-card__title {
+    font-size: 1.0625rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .post-card__image,
+    .post-card__title a {
+      transition: none;
+    }
+  }
+</style>

@@ -1,0 +1,728 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+/*
+  Paleta "Tinta & Brasa": neutros quentes de papel e tinta com um único acento
+  brasa (terracota). Cinzas quentes em vez de slate azulado fazem o site ler
+  como revista impressa, não como dashboard SaaS — e o acento único, usado com
+  parcimônia, dá hierarquia sem recorrer ao gradiente roxo/azul de template.
+
+  Nenhuma cor é escrita direto num componente. Tudo passa por estes tokens,
+  então trocar a identidade inteira é editar este bloco.
+*/
+
+@layer theme {
+  :root {
+    /* ---- Superfícies ---- */
+    --c-paper: #faf8f4;
+    --c-surface: #ffffff;
+    --c-surface-2: #f3efe8;
+    --c-surface-inset: #ebe5da;
+
+    /* ---- Texto ---- */
+    --c-ink: #17120e;
+    --c-ink-muted: #5c534a;
+    --c-ink-subtle: #6f6559;
+    --c-ink-inverse: #faf8f4;
+
+    /* ---- Estrutura ---- */
+    --c-line: #e4dcd0;
+    --c-line-strong: #cfc3b2;
+
+    /* ---- Acentos ---- */
+    --c-ember: #b4432a;
+    --c-ember-strong: #93341f;
+    --c-ember-wash: #fbeee9;
+    --c-moss: #4a6247;
+    --c-moss-wash: #eef2ec;
+
+    /* ---- Estado ---- */
+    --c-focus: #b4432a;
+    --c-selection: #f6d9cf;
+
+    /* ---- Sombra: presença mínima, a borda é que estrutura ---- */
+    --shadow-raise: 0 1px 2px rgb(23 18 14 / 0.04), 0 8px 24px -12px rgb(23 18 14 / 0.12);
+    --shadow-pop: 0 2px 4px rgb(23 18 14 / 0.05), 0 16px 40px -16px rgb(23 18 14 / 0.18);
+
+    color-scheme: light;
+  }
+
+  .dark {
+    --c-paper: #0c0a08;
+    --c-surface: #141110;
+    --c-surface-2: #1d1917;
+    --c-surface-inset: #262120;
+
+    --c-ink: #f0eae2;
+    --c-ink-muted: #a79c90;
+    --c-ink-subtle: #8a7f71;
+    --c-ink-inverse: #17120e;
+
+    --c-line: #2a2421;
+    --c-line-strong: #3d3531;
+
+    --c-ember: #ff7a55;
+    --c-ember-strong: #ff9878;
+    --c-ember-wash: #24150f;
+    --c-moss: #8fb389;
+    --c-moss-wash: #141a13;
+
+    --c-focus: #ff7a55;
+    --c-selection: #4a2015;
+
+    --shadow-raise: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 2px 4px rgb(0 0 0 / 0.5), 0 16px 40px -16px rgb(0 0 0 / 0.7);
+
+    color-scheme: dark;
+  }
+}
+
+/*
+  `@theme inline` faz o Tailwind gerar as utilidades apontando direto para as
+  variáveis acima, sem reemitir os custom properties. Resultado: `bg-paper`,
+  `text-ink` e `border-line` trocam sozinhas no modo escuro, sem uma única
+  variante `dark:` espalhada pelos componentes.
+*/
+@theme inline {
+  --color-paper: var(--c-paper);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-inset: var(--c-surface-inset);
+
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-ink-muted);
+  --color-subtle: var(--c-ink-subtle);
+  --color-inverse: var(--c-ink-inverse);
+
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+
+  --color-ember: var(--c-ember);
+  --color-ember-strong: var(--c-ember-strong);
+  --color-ember-wash: var(--c-ember-wash);
+  --color-moss: var(--c-moss);
+  --color-moss-wash: var(--c-moss-wash);
+
+  /* Fontes servidas pela Fonts API do Astro (ver astro.config.mjs).
+     O fallback no `var()` mantém a página legível caso <Font /> não seja
+     renderizado numa rota. */
+  --font-display: var(--ff-display, 'Iowan Old Style', Georgia, serif);
+  --font-serif: var(--ff-prose, Charter, Georgia, serif);
+  --font-sans: var(--ff-ui, 'Segoe UI', system-ui, sans-serif);
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  --shadow-raise: var(--shadow-raise);
+  --shadow-pop: var(--shadow-pop);
+}
+
+@theme {
+  /* Escala tipográfica editorial. `clamp()` em vez de breakpoints: a manchete
+     acompanha a viewport continuamente, sem saltos em larguras intermediárias. */
+  --text-hero: clamp(2.75rem, 1.35rem + 6vw, 6rem);
+  --text-hero--line-height: 0.94;
+  --text-hero--letter-spacing: -0.035em;
+
+  --text-display: clamp(2.25rem, 1.4rem + 3.6vw, 4rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.03em;
+
+  --text-title: clamp(1.75rem, 1.3rem + 1.9vw, 2.75rem);
+  --text-title--line-height: 1.1;
+  --text-title--letter-spacing: -0.022em;
+
+  --text-heading: clamp(1.35rem, 1.15rem + 0.85vw, 1.75rem);
+  --text-heading--line-height: 1.2;
+  --text-heading--letter-spacing: -0.015em;
+
+  --text-lead: clamp(1.125rem, 1.03rem + 0.42vw, 1.375rem);
+  --text-lead--line-height: 1.55;
+
+  /* Caixa-alta de metadados: sem tracking positivo, versalete falso vira ruído. */
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1;
+  --text-eyebrow--letter-spacing: 0.14em;
+
+  --radius-card: 0.75rem;
+  --radius-pill: 100px;
+
+  /* Larguras de leitura. `editorial` fica em ~68 caracteres — a faixa em que a
+     leitura de corrido é mais rápida em pt-BR. */
+  --container-editorial: 43rem;
+  --container-reading: 52rem;
+  --container-wide: 78rem;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --animate-marquee: marquee 42s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+/* O toggle escreve a classe `dark` no <html>; `:where()` mantém a
+   especificidade em zero para que qualquer utilitário vença sem `!important`. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Só aplica quando o usuário não pediu menos movimento — a classe `motion` é
+   escrita pelo script inline do <head>, antes do primeiro paint. */
+@custom-variant motion-ok (&:where(.motion *, .motion));
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--c-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    /* Compensa o header fixo ao pular para uma âncora do sumário. */
+    scroll-padding-top: calc(var(--header-height) + 2rem);
+    hanging-punctuation: first last;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: var(--c-paper);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Impede que a barra de rolagem aparecendo/sumindo entre rotas mexa o
+       layout — é CLS de graça. */
+    scrollbar-gutter: stable;
+  }
+
+  ::selection {
+    background-color: var(--c-selection);
+    color: var(--c-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* O anel padrão some quando o alvo já é uma superfície com foco próprio. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  img,
+  video,
+  svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Reserva de espaço padrão para toda imagem de conteúdo sem dimensão
+     declarada. Astro emite width/height nas imagens otimizadas, mas isto
+     protege as que vierem de fora. */
+  img {
+    background-color: var(--c-surface-2);
+  }
+
+  :root {
+    --header-height: 4.5rem;
+  }
+
+  @media (min-width: 768px) {
+    :root {
+      --header-height: 5.25rem;
+    }
+  }
+}
+
+@layer components {
+  /* ---------------------------------------------------------------------- */
+  /* Estrutura                                                              */
+  /* ---------------------------------------------------------------------- */
+
+  .shell {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+    max-width: var(--container-wide);
+  }
+
+  @media (min-width: 768px) {
+    .shell {
+      padding-inline: 2rem;
+    }
+  }
+
+  .shell-editorial {
+    max-width: var(--container-editorial);
+  }
+
+  .shell-reading {
+    max-width: var(--container-reading);
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Tipografia utilitária                                                  */
+  /* ---------------------------------------------------------------------- */
+
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-size: var(--text-eyebrow);
+    letter-spacing: var(--text-eyebrow--letter-spacing);
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--c-ink-subtle);
+  }
+
+  /* Sublinhado que cresce a partir da esquerda. Usa transform, não
+     width/border, para animar no compositor sem tocar no layout. */
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size 0.32s var(--ease-out-expo);
+  }
+
+  .link-underline:hover,
+  .link-underline:focus-visible {
+    background-size: 100% 1px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .link-underline {
+      transition: none;
+    }
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Botões                                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.8125rem 1.375rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background-color 0.2s var(--ease-out-soft),
+      border-color 0.2s var(--ease-out-soft),
+      color 0.2s var(--ease-out-soft),
+      transform 0.2s var(--ease-out-expo);
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn-primary {
+    background-color: var(--c-ember);
+    color: #ffffff;
+  }
+
+  .dark .btn-primary {
+    color: #17120e;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--c-ember-strong);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--c-ink);
+    border-color: var(--c-line-strong);
+  }
+
+  .btn-ghost:hover {
+    background-color: var(--c-surface-2);
+    border-color: var(--c-ink-subtle);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn,
+    .btn:active {
+      transition: none;
+      transform: none;
+    }
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Superfícies                                                            */
+  /* ---------------------------------------------------------------------- */
+
+  .card {
+    position: relative;
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-card);
+    transition:
+      border-color 0.3s var(--ease-out-soft),
+      transform 0.4s var(--ease-out-expo),
+      box-shadow 0.4s var(--ease-out-expo);
+  }
+
+  .card:hover {
+    border-color: var(--c-line-strong);
+    box-shadow: var(--shadow-raise);
+  }
+
+  .motion .card:hover {
+    transform: translateY(-3px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card,
+    .card:hover {
+      transition: none;
+      transform: none;
+    }
+  }
+
+  /* Torna o card inteiro clicável sem aninhar links (que seria HTML inválido
+     e um pesadelo de acessibilidade). O link real continua sendo o título. */
+  .card-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.3125rem 0.6875rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--c-line);
+    background-color: var(--c-surface-2);
+    color: var(--c-ink-muted);
+    transition:
+      border-color 0.2s var(--ease-out-soft),
+      color 0.2s var(--ease-out-soft),
+      background-color 0.2s var(--ease-out-soft);
+  }
+
+  a.pill:hover {
+    border-color: var(--c-ember);
+    color: var(--c-ember);
+    background-color: var(--c-ember-wash);
+  }
+
+  /* Filete decorativo usado para separar seções sem uma <hr> pesada. */
+  .rule {
+    height: 1px;
+    background: linear-gradient(to right, var(--c-line-strong), var(--c-line) 30%, transparent);
+    border: 0;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Animação de entrada                                                        */
+/* -------------------------------------------------------------------------- */
+
+/*
+  Estado inicial escondido só existe quando há JS E o usuário aceita movimento.
+  Sem isso, um erro de script ou `prefers-reduced-motion` deixaria a página em
+  branco — o modo de falha mais caro que existe num site de conteúdo.
+
+  Só `opacity` e `transform` são animados: ambos rodam no compositor e nunca
+  entram na conta de CLS.
+*/
+.motion [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  will-change: opacity, transform;
+}
+
+.motion [data-reveal].is-revealed {
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Blocos de anúncio                                                          */
+/* -------------------------------------------------------------------------- */
+
+/*
+  A altura é reservada ANTES do anúncio carregar. O AdSense preenche uma caixa
+  que já existe, então o texto abaixo nunca é empurrado: CLS = 0.
+  Ajuste os valores se trocar os formatos das unidades no painel do AdSense.
+*/
+.ad-slot {
+  --ad-min-height: 280px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 2.75rem;
+  padding: 1rem;
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius-card);
+  background-color: var(--c-surface-2);
+  /* `contain` impede que qualquer coisa dentro do iframe do anúncio afete o
+     layout ou a pintura do resto da página. */
+  contain: layout paint style;
+  min-height: var(--ad-min-height);
+}
+
+.ad-slot__label {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-ink-subtle);
+}
+
+.ad-slot .adsbygoogle {
+  display: block;
+  width: 100%;
+  min-height: calc(var(--ad-min-height) - 3rem);
+}
+
+.ad-slot--sidebar {
+  --ad-min-height: 620px;
+  position: sticky;
+  top: calc(var(--header-height) + 1.5rem);
+}
+
+.ad-slot--in-article,
+.ad-slot--mid-content {
+  --ad-min-height: 300px;
+}
+
+.ad-slot--footer {
+  --ad-min-height: 300px;
+}
+
+@media (min-width: 768px) {
+  .ad-slot--in-article,
+  .ad-slot--mid-content,
+  .ad-slot--footer {
+    --ad-min-height: 280px;
+  }
+}
+
+/* Sem client ID configurado (dev), o bloco não deve fingir que existe. */
+.ad-slot:empty,
+.ad-slot[data-ad-disabled] {
+  display: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Corpo do artigo                                                            */
+/* -------------------------------------------------------------------------- */
+
+/*
+  Sobrescreve os tokens do plugin @tailwindcss/typography com a paleta do
+  projeto, em vez de reescrever cada seletor. O plugin continua cuidando dos
+  casos que ninguém lembra de estilizar — tabelas, notas de rodapé, listas de
+  definição, `<kbd>`, `<figcaption>`.
+*/
+.prose-editorial {
+  --tw-prose-body: var(--c-ink);
+  --tw-prose-headings: var(--c-ink);
+  --tw-prose-lead: var(--c-ink-muted);
+  --tw-prose-links: var(--c-ember);
+  --tw-prose-bold: var(--c-ink);
+  --tw-prose-counters: var(--c-ink-subtle);
+  --tw-prose-bullets: var(--c-line-strong);
+  --tw-prose-hr: var(--c-line);
+  --tw-prose-quotes: var(--c-ink);
+  --tw-prose-quote-borders: var(--c-ember);
+  --tw-prose-captions: var(--c-ink-subtle);
+  --tw-prose-code: var(--c-ink);
+  --tw-prose-pre-code: var(--c-ink);
+  --tw-prose-pre-bg: var(--c-surface-2);
+  --tw-prose-th-borders: var(--c-line-strong);
+  --tw-prose-td-borders: var(--c-line);
+
+  font-family: var(--font-serif);
+  font-size: 1.1875rem;
+  line-height: 1.75;
+  max-width: none;
+  /* Ativa ligaduras e números old-style: detalhe de texto impresso que separa
+     um corpo de texto cuidado de um `font-size: 16px` qualquer. */
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  font-feature-settings:
+    'liga' 1,
+    'clig' 1,
+    'kern' 1;
+}
+
+@media (min-width: 768px) {
+  .prose-editorial {
+    font-size: 1.25rem;
+    line-height: 1.7;
+  }
+}
+
+.prose-editorial :is(h2, h3, h4) {
+  font-family: var(--font-display);
+  letter-spacing: -0.018em;
+  /* Reserva espaço para a âncora do sumário sem deslocar o texto. */
+  scroll-margin-top: calc(var(--header-height) + 2rem);
+}
+
+.prose-editorial h2 {
+  font-size: 1.85em;
+  font-weight: 600;
+  margin-top: 2.2em;
+  margin-bottom: 0.7em;
+}
+
+.prose-editorial h3 {
+  font-size: 1.35em;
+  font-weight: 600;
+  margin-top: 1.9em;
+  margin-bottom: 0.6em;
+}
+
+/* Primeira letra em capitular: gesto editorial clássico, aplicado só no
+   primeiro parágrafo e só a partir de telas em que não quebra a coluna. */
+@media (min-width: 640px) {
+  .prose-editorial > p:first-of-type::first-letter {
+    float: left;
+    font-family: var(--font-display);
+    font-size: 3.6em;
+    font-weight: 600;
+    line-height: 0.82;
+    padding-right: 0.08em;
+    margin-top: 0.06em;
+    color: var(--c-ember);
+  }
+}
+
+.prose-editorial a {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 92%;
+  background-size: 100% 1px;
+  transition: background-size 0.25s var(--ease-out-expo);
+}
+
+.prose-editorial a:hover {
+  background-size: 100% 2px;
+}
+
+.prose-editorial blockquote {
+  font-family: var(--font-display);
+  font-size: 1.15em;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.45;
+  border-left-width: 2px;
+  padding-left: 1.25em;
+  margin-block: 2em;
+}
+
+.prose-editorial blockquote p::before,
+.prose-editorial blockquote p::after {
+  content: none;
+}
+
+.prose-editorial :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  font-weight: 500;
+  background-color: var(--c-surface-2);
+  border: 1px solid var(--c-line);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+}
+
+.prose-editorial :not(pre) > code::before,
+.prose-editorial :not(pre) > code::after {
+  content: none;
+}
+
+.prose-editorial pre {
+  font-size: 0.85rem;
+  line-height: 1.65;
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius-card);
+  padding: 1.25rem;
+}
+
+/* Shiki emite os dois temas; a troca é por CSS, sem reprocessar no cliente. */
+.dark .prose-editorial .astro-code,
+.dark .prose-editorial .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+.prose-editorial img,
+.prose-editorial figure {
+  border-radius: var(--radius-card);
+  margin-block: 2.25em;
+}
+
+.prose-editorial figcaption {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  text-align: center;
+  margin-top: 0.9em;
+}
+
+.prose-editorial hr {
+  margin-block: 3em;
+}
+
+/* Os blocos de anúncio são inseridos como irmãos dos parágrafos pelo plugin do
+   Sätteri; o `prose` não deve tratá-los como conteúdo editorial. */
+.prose-editorial .ad-slot {
+  font-family: var(--font-sans);
+}

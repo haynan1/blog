@@ -1,0 +1,186 @@
+---
+import { LEGAL_LINKS, NAV_LINKS, SITE } from '~/config/site';
+import { CATEGORIES } from '~/config/categories';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="site-footer__top">
+      <div class="site-footer__brand">
+        <span class="site-footer__name">{SITE.name}</span>
+        <p class="site-footer__tagline">{SITE.tagline}</p>
+        <p class="site-footer__blurb">{SITE.description}</p>
+
+        <ul class="site-footer__social">
+          {
+            SITE.social.map((profile) => (
+              <li>
+                <a
+                  href={profile.url}
+                  rel="me noopener noreferrer"
+                  target="_blank"
+                  class="link-underline"
+                >
+                  {profile.name}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <nav class="site-footer__nav" aria-label="Rodapé">
+        <div>
+          <h2 class="eyebrow">Navegar</h2>
+          <ul>
+            <li><a href="/" class="link-underline">Início</a></li>
+            {
+              NAV_LINKS.map((link) => (
+                <li>
+                  <a href={link.href} class="link-underline">
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
+            <li><a href="/rss.xml" class="link-underline">RSS</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="eyebrow">Categorias</h2>
+          <ul>
+            {
+              CATEGORIES.map((category) => (
+                <li>
+                  <a href={`/categoria/${category.slug}`} class="link-underline">
+                    {category.name}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="eyebrow">Legal</h2>
+          <ul>
+            {
+              LEGAL_LINKS.map((link) => (
+                <li>
+                  <a href={link.href} class="link-underline">
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
+            <li>
+              <a href={`mailto:${SITE.author.email}`} class="link-underline">
+                {SITE.author.email}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <div class="site-footer__bottom">
+      <p>© {year} {SITE.name}. Todos os direitos reservados.</p>
+      <p class="site-footer__note">
+        Este site exibe anúncios do Google AdSense e usa cookies. Veja a
+        <a href="/politica-de-privacidade" class="link-underline">Política de Privacidade</a>.
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 6rem;
+    padding-block: 4rem 2.5rem;
+    border-top: 1px solid var(--c-line);
+    background-color: var(--c-surface);
+    font-size: 0.9375rem;
+  }
+
+  .site-footer__top {
+    display: grid;
+    gap: 3rem;
+  }
+
+  .site-footer__name {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  .site-footer__tagline {
+    margin-top: 0.375rem;
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    font-style: italic;
+    color: var(--c-ember);
+  }
+
+  .site-footer__blurb {
+    margin-top: 1rem;
+    max-width: 36ch;
+    color: var(--c-ink-muted);
+    line-height: 1.65;
+  }
+
+  .site-footer__social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+    color: var(--c-ink-muted);
+  }
+
+  .site-footer__nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 2rem;
+  }
+
+  .site-footer__nav h2 {
+    margin-bottom: 1rem;
+  }
+
+  .site-footer__nav ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    color: var(--c-ink-muted);
+  }
+
+  .site-footer__nav a:hover {
+    color: var(--c-ink);
+  }
+
+  .site-footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 3.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--c-line);
+    font-size: 0.8125rem;
+    color: var(--c-ink-subtle);
+  }
+
+  .site-footer__note a {
+    color: var(--c-ink-muted);
+  }
+
+  @media (min-width: 900px) {
+    .site-footer__top {
+      grid-template-columns: 1.1fr 1.4fr;
+      gap: 4rem;
+    }
+  }
+</style>

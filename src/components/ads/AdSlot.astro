@@ -1,0 +1,47 @@
+---
+/**
+ * Unidade de anúncio do AdSense com espaço reservado.
+ *
+ * O `<ins>` já sai no HTML dentro de um container com `min-height` definido em
+ * CSS, então o anúncio preenche uma caixa que existe desde o primeiro paint.
+ * Nada é empurrado quando o iframe carrega — CLS zero, que é ao mesmo tempo um
+ * critério de Core Web Vitals e um fator no valor pago por impressão.
+ *
+ * Sem `PUBLIC_ADSENSE_CLIENT` configurado (dev, ou antes da aprovação), o
+ * componente não renderiza nada: melhor um espaço vazio do que uma moldura
+ * "Publicidade" sem publicidade.
+ */
+
+interface Props {
+  /** Slot ID numérico da unidade, do painel do AdSense. */
+  slot: string | undefined;
+  /** Posição — define a altura reservada via CSS. */
+  position: 'sidebar' | 'footer' | 'in-article' | 'mid-content';
+  format?: 'auto' | 'rectangle' | 'vertical' | 'horizontal';
+  class?: string | undefined;
+}
+
+const { slot, position, format = 'auto', class: className } = Astro.props;
+
+const client = import.meta.env['PUBLIC_ADSENSE_CLIENT'];
+const enabled = Boolean(client && slot);
+---
+
+{
+  enabled && (
+    <aside
+      class:list={['ad-slot', `ad-slot--${position}`, className]}
+      aria-label="Publicidade"
+      data-ad-position={position}
+    >
+      <span class="ad-slot__label">Publicidade</span>
+      <ins
+        class="adsbygoogle"
+        data-ad-client={client}
+        data-ad-slot={slot}
+        data-ad-format={format}
+        data-full-width-responsive="true"
+      />
+    </aside>
+  )
+}

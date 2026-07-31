@@ -1,0 +1,144 @@
+---
+/**
+ * Alternador de tema.
+ *
+ * O ícone é um único SVG que se transforma: o círculo cresce e a máscara
+ * desliza, virando lua. Dois ícones com `display: none` alternado seriam mais
+ * simples, mas o corte seco denuncia o truque — aqui a transição é contínua.
+ *
+ * `aria-pressed` comunica o estado a leitores de tela; o rótulo visível muda
+ * junto para que o botão faça sentido lido isoladamente.
+ */
+---
+
+<button
+  type="button"
+  id="theme-toggle"
+  class="theme-toggle"
+  aria-pressed="false"
+  aria-label="Alternar entre tema claro e escuro"
+  title="Alternar tema"
+>
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+    <mask id="theme-toggle-mask">
+      <rect x="0" y="0" width="24" height="24" fill="white"></rect>
+      <circle class="theme-toggle__cut" cx="24" cy="10" r="6" fill="black"></circle>
+    </mask>
+    <circle
+      class="theme-toggle__orb"
+      cx="12"
+      cy="12"
+      r="5"
+      fill="currentColor"
+      mask="url(#theme-toggle-mask)"></circle>
+    <g class="theme-toggle__rays" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+      <line x1="12" y1="1.6" x2="12" y2="3.6"></line>
+      <line x1="12" y1="20.4" x2="12" y2="22.4"></line>
+      <line x1="1.6" y1="12" x2="3.6" y2="12"></line>
+      <line x1="20.4" y1="12" x2="22.4" y2="12"></line>
+      <line x1="4.6" y1="4.6" x2="6" y2="6"></line>
+      <line x1="18" y1="18" x2="19.4" y2="19.4"></line>
+      <line x1="4.6" y1="19.4" x2="6" y2="18"></line>
+      <line x1="18" y1="6" x2="19.4" y2="4.6"></line>
+    </g>
+  </svg>
+</button>
+
+<style>
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    border-radius: 100px;
+    border: 1px solid var(--c-line);
+    background-color: var(--c-surface);
+    color: var(--c-ink);
+    cursor: pointer;
+    transition:
+      background-color 0.25s var(--ease-out-soft),
+      border-color 0.25s var(--ease-out-soft);
+  }
+
+  .theme-toggle:hover {
+    background-color: var(--c-surface-2);
+    border-color: var(--c-line-strong);
+  }
+
+  .theme-toggle__orb,
+  .theme-toggle__cut,
+  .theme-toggle__rays {
+    transition:
+      transform 0.5s var(--ease-out-expo),
+      opacity 0.3s var(--ease-out-soft),
+      r 0.5s var(--ease-out-expo),
+      cx 0.5s var(--ease-out-expo);
+    transform-origin: center;
+  }
+
+  /* Escuro: o sol perde os raios, cresce um pouco e a máscara entra por cima
+     do canto superior direito — a lua é o que sobra do círculo. */
+  :global(.dark) .theme-toggle__rays {
+    opacity: 0;
+    transform: scale(0.5) rotate(45deg);
+  }
+
+  :global(.dark) .theme-toggle__orb {
+    r: 8;
+  }
+
+  :global(.dark) .theme-toggle__cut {
+    cx: 17;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .theme-toggle,
+    .theme-toggle__orb,
+    .theme-toggle__cut,
+    .theme-toggle__rays {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const STORAGE_KEY = 'theme';
+
+  const syncPressedState = () => {
+    const button = document.getElementById('theme-toggle');
+    if (!button) return;
+    const isDark = document.documentElement.classList.contains('dark');
+    button.setAttribute('aria-pressed', String(isDark));
+    button.setAttribute(
+      'aria-label',
+      isDark ? 'Mudar para o tema claro' : 'Mudar para o tema escuro',
+    );
+  };
+
+  const toggle = () => {
+    const root = document.documentElement;
+    const isDark = root.classList.toggle('dark');
+    root.style.colorScheme = isDark ? 'dark' : 'light';
+
+    try {
+      localStorage.setItem(STORAGE_KEY, isDark ? 'dark' : 'light');
+    } catch {
+      // Storage indisponível: a escolha vale só para esta sessão. Bloquear o
+      // toggle por causa disso seria pior do que não persistir.
+    }
+
+    syncPressedState();
+  };
+
+  // Delegação no documento: sobrevive à troca de DOM das View Transitions sem
+  // precisar reanexar o listener a cada navegação.
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element | null;
+    if (target?.closest('#theme-toggle')) toggle();
+  });
+
+  syncPressedState();
+  document.addEventListener('astro:page-load', syncPressedState);
+</script>

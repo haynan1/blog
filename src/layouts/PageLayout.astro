@@ -1,0 +1,70 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Breadcrumb from '~/components/ui/Breadcrumb.astro';
+
+/** Layout das páginas institucionais: sobre, contato, legais. */
+
+interface Props {
+  title: string;
+  description: string;
+  eyebrow?: string;
+  /** Data da última revisão — obrigatória nas páginas legais. */
+  updatedAt?: string | undefined;
+  noindex?: boolean;
+  /** `wide` para conteúdo com blocos próprios; `editorial` para texto corrido. */
+  width?: 'editorial' | 'wide';
+}
+
+const {
+  title,
+  description,
+  eyebrow,
+  updatedAt,
+  noindex = false,
+  width = 'editorial',
+} = Astro.props;
+---
+
+<BaseLayout title={title} description={description} noindex={noindex}>
+  <div class:list={['page', 'shell', width === 'editorial' ? 'shell-reading' : '']}>
+    <header class="page__header">
+      <Breadcrumb crumbs={[{ name: title, href: Astro.url.pathname }]} />
+      {eyebrow && <p class="eyebrow page__eyebrow">{eyebrow}</p>}
+      <h1 class="page__title">{title}</h1>
+      {updatedAt && <p class="page__updated">Última atualização: {updatedAt}</p>}
+    </header>
+
+    <slot />
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding-top: 2.5rem;
+  }
+
+  .page__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding-bottom: 2.5rem;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  .page__eyebrow {
+    margin-top: 0.5rem;
+  }
+
+  .page__title {
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+    letter-spacing: var(--text-display--letter-spacing);
+    font-weight: 700;
+  }
+
+  .page__updated {
+    font-size: 0.8125rem;
+    color: var(--c-ink-subtle);
+  }
+</style>

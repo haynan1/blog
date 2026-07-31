@@ -1,0 +1,38 @@
+---
+import ArchiveLayout from '~/layouts/ArchiveLayout.astro';
+import { getPosts, pageNumbersAfterFirst, paginate, type Post } from '~/lib/posts';
+import { SITE } from '~/config/site';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+
+  // Só páginas 2..N: a primeira é `/blog`, e gerar `/blog/pagina/1` criaria uma
+  // segunda URL com conteúdo idêntico.
+  return pageNumbersAfterFirst(posts.length, SITE.postsPerPage).map((page) => ({
+    params: { page: String(page) },
+    props: { page, posts },
+  }));
+}
+
+interface Props {
+  page: number;
+  posts: Post[];
+}
+
+const { page, posts } = Astro.props;
+
+const buildHref = (target: number) => (target === 1 ? '/blog' : `/blog/pagina/${target}`);
+const paginated = paginate(posts, page, SITE.postsPerPage, buildHref);
+
+const description =
+  'O arquivo completo do Contracorrente: ensaios e guias sobre tecnologia, negócios, produtividade e design, do mais recente ao mais antigo.';
+---
+
+<ArchiveLayout
+  eyebrow="Arquivo"
+  title="Todos os artigos"
+  description={description}
+  crumbs={[{ name: 'Blog', href: '/blog' }]}
+  paginated={paginated}
+  buildHref={buildHref}
+/>

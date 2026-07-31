@@ -1,0 +1,24 @@
+# Contracorrente — https://www.contracorrente.com.br
+
+User-agent: *
+Allow: /
+
+# Rastreador do AdSense. Precisa de acesso irrestrito para avaliar a página e
+# escolher os anúncios — bloqueá-lo derruba a receita e o preenchimento.
+User-agent: Mediapartners-Google
+Allow: /
+
+User-agent: AdsBot-Google
+Allow: /
+
+# Páginas legais não precisam de crawl budget: são obrigatórias, não são
+# conteúdo de busca. Também estão como noindex no HTML.
+Disallow: /politica-de-privacidade
+Disallow: /termos-de-uso
+
+# Paginação profunda gera muitas URLs de baixo valor. Os posts em si continuam
+# acessíveis pelo sitemap e pelos links internos.
+Disallow: /blog/pagina/
+Disallow: /categoria/*/pagina/
+
+Sitemap: https://www.contracorrente.com.br/sitemap-index.xml

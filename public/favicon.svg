@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Contracorrente">
+  <!--
+    A marca é a barra vertical do header em forma de ícone: um filete de brasa
+    cortando o campo escuro. SVG porque escala para qualquer densidade de tela
+    com ~600 bytes, e porque `prefers-color-scheme` funciona aqui dentro — o
+    favicon acompanha o tema do sistema.
+  -->
+  <style>
+    .bg { fill: #17120e; }
+    .mark { fill: #ff7a55; }
+    @media (prefers-color-scheme: light) {
+      .bg { fill: #faf8f4; }
+      .mark { fill: #b4432a; }
+    }
+  </style>
+  <rect class="bg" width="64" height="64" rx="14" />
+  <rect class="mark" x="20" y="14" width="9" height="36" rx="4.5" />
+  <rect class="mark" x="35" y="24" width="9" height="26" rx="4.5" opacity="0.55" />
+</svg>

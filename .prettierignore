@@ -1,0 +1,7 @@
+dist/
+.astro/
+node_modules/
+venv/
+package-lock.json
+public/.htaccess
+public/rss.xsl

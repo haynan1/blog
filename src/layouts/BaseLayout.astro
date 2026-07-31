@@ -1,0 +1,122 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { Font } from 'astro:assets';
+
+import '~/styles/global.css';
+
+import Seo from '~/components/seo/Seo.astro';
+import ThemeScript from '~/components/ThemeScript.astro';
+import Header from '~/components/layout/Header.astro';
+import Footer from '~/components/layout/Footer.astro';
+import AdSenseLoader from '~/components/ads/AdSenseLoader.astro';
+import { SITE } from '~/config/site';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: string | undefined;
+  imageAlt?: string | undefined;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  canonical?: string | undefined;
+  publishedTime?: Date | undefined;
+  modifiedTime?: Date | undefined;
+  jsonLd?: string | undefined;
+  prevUrl?: string | undefined;
+  nextUrl?: string | undefined;
+  /** Classe extra no <main>, para variações de largura por rota. */
+  mainClass?: string | undefined;
+}
+
+const { mainClass, ...seo } = Astro.props;
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <ThemeScript />
+    <Seo {...seo} />
+
+    {
+      /* Só a fonte de display é pré-carregada: ela desenha a manchete, que é o
+        elemento LCP em quase toda rota. Pré-carregar as três competiria por
+        banda com a imagem principal e atrasaria justamente o que importa. */
+    }
+    <Font cssVariable="--ff-display" preload />
+    <Font cssVariable="--ff-prose" />
+    <Font cssVariable="--ff-ui" />
+
+    <ClientRouter />
+    <AdSenseLoader />
+  </head>
+
+  <body>
+    <Header />
+
+    <main id="conteudo" class={mainClass}>
+      <slot />
+    </main>
+
+    <Footer />
+
+    <script>
+      /**
+       * Reveal on scroll.
+       *
+       * O GSAP entra por import dinâmico e só quando há algo para animar e o
+       * usuário aceita movimento — em `prefers-reduced-motion` os ~24 KB nunca
+       * saem da rede. Só `opacity` e `transform` são animados, então nada disso
+       * entra na conta de CLS.
+       */
+      let observer: IntersectionObserver | undefined;
+
+      const setupReveal = async () => {
+        observer?.disconnect();
+
+        if (!document.documentElement.classList.contains('motion')) return;
+
+        const targets = document.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-revealed)');
+        if (targets.length === 0) return;
+
+        const { gsap } = await import('gsap');
+
+        observer = new IntersectionObserver(
+          (entries) => {
+            // Agrupa o que entrou no mesmo frame para escalonar a sequência em
+            // ordem visual, em vez de na ordem em que o observer disparou.
+            const visible = entries
+              .filter((entry) => entry.isIntersecting)
+              .map((entry) => entry.target as HTMLElement)
+              .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+
+            if (visible.length === 0) return;
+
+            for (const element of visible) {
+              element.classList.add('is-revealed');
+              observer?.unobserve(element);
+            }
+
+            gsap.to(visible, {
+              opacity: 1,
+              y: 0,
+              duration: 0.75,
+              ease: 'expo.out',
+              stagger: 0.07,
+              overwrite: 'auto',
+            });
+          },
+          // Dispara um pouco antes de entrar na tela: a animação termina quando
+          // o elemento está confortavelmente visível, não depois.
+          { rootMargin: '0px 0px -12% 0px', threshold: 0.05 },
+        );
+
+        for (const target of targets) observer.observe(target);
+      };
+
+      setupReveal();
+      document.addEventListener('astro:page-load', setupReveal);
+      // Desliga antes da troca de DOM para não observar nós descartados.
+      document.addEventListener('astro:before-swap', () => observer?.disconnect());
+    </script>
+  </body>
+</html>

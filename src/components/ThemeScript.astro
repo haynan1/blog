@@ -1,0 +1,64 @@
+---
+/**
+ * Script de tema, inline no <head>.
+ *
+ * Precisa ser `is:inline` e vir antes de qualquer conteúdo: um bundle externo
+ * seria baixado depois do primeiro paint e o usuário de tema escuro veria um
+ * flash branco. É o único script que bloqueia o parser no site — custa
+ * microssegundos e elimina o flash por completo.
+ *
+ * Também escreve `js` e `motion` no <html>, que são os interruptores usados
+ * pelo CSS: sem JS, nada fica escondido; com `prefers-reduced-motion`, nada
+ * anima. Decidir isso antes do paint evita qualquer salto visual.
+ */
+---
+
+<script is:inline>
+  (() => {
+    const root = document.documentElement;
+
+    const applyTheme = () => {
+      let dark = false;
+      try {
+        const saved = localStorage.getItem('theme');
+        dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      } catch {
+        // localStorage bloqueado (modo privado, cookies de terceiros
+        // desativados). Segue com a preferência do sistema.
+        dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+      root.classList.toggle('dark', dark);
+      root.style.colorScheme = dark ? 'dark' : 'light';
+    };
+
+    const applyMotion = () => {
+      const ok = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      root.classList.toggle('motion', ok);
+    };
+
+    root.classList.add('js');
+    applyTheme();
+    applyMotion();
+
+    // O ClientRouter troca o <html> a cada navegação; sem reaplicar aqui, o
+    // tema voltaria ao padrão no meio da sessão.
+    document.addEventListener('astro:after-swap', () => {
+      applyTheme();
+      applyMotion();
+      root.classList.add('js');
+    });
+
+    // Acompanha o sistema em tempo real, mas só enquanto não houver escolha
+    // explícita salva — uma preferência do usuário nunca é sobrescrita.
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      try {
+        if (localStorage.getItem('theme')) return;
+      } catch {
+        /* sem acesso ao storage: segue o sistema */
+      }
+      applyTheme();
+    });
+
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', applyMotion);
+  })();
+</script>

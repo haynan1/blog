@@ -1,0 +1,177 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Breadcrumb from '~/components/ui/Breadcrumb.astro';
+import Pagination from '~/components/ui/Pagination.astro';
+import PostCard from '~/components/post/PostCard.astro';
+import AdSlot from '~/components/ads/AdSlot.astro';
+import type { Crumb } from '~/lib/schema';
+import type { Paginated, Post } from '~/lib/posts';
+
+/**
+ * Layout compartilhado por /blog e pelos arquivos de categoria.
+ *
+ * As quatro rotas de listagem (blog, blog paginado, categoria, categoria
+ * paginada) renderizam exatamente a mesma coisa com dados diferentes. Uma
+ * única implementação significa que um ajuste no grid ou na posição do anúncio
+ * vale para todas de uma vez.
+ */
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  description: string;
+  crumbs: Crumb[];
+  paginated: Paginated<Post>;
+  buildHref: (page: number) => string;
+  jsonLd?: string | undefined;
+  /** Canonical da página 1, para não duplicar com a rota paginada. */
+  canonical?: string | undefined;
+}
+
+const { eyebrow, title, description, crumbs, paginated, buildHref, jsonLd, canonical } =
+  Astro.props;
+
+const { items, page, totalPages, total, prevUrl, nextUrl } = paginated;
+
+// Página 2 em diante entra como noindex,follow: são listas de links sem texto
+// próprio. O Google segue os links e indexa os posts; a lista em si não
+// compete com nada.
+const noindex = page > 1;
+
+const pageTitle = page > 1 ? `${title} — página ${page}` : title;
+
+// Montado aqui, e não no template: o Astro colapsa o espaço em branco entre
+// expressões adjacentes, o que renderizaria "3artigos publicados".
+const countLabel = [
+  `${total} ${total === 1 ? 'artigo publicado' : 'artigos publicados'}`,
+  totalPages > 1 ? `página ${page} de ${totalPages}` : '',
+]
+  .filter(Boolean)
+  .join(' · ');
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={description}
+  noindex={noindex}
+  canonical={canonical}
+  prevUrl={prevUrl}
+  nextUrl={nextUrl}
+  jsonLd={jsonLd}
+>
+  <div class="archive shell">
+    <header class="archive__header">
+      <Breadcrumb crumbs={crumbs} />
+      <p class="eyebrow archive__eyebrow">{eyebrow}</p>
+      <h1 class="archive__title">{title}</h1>
+      <p class="archive__description">{description}</p>
+      <p class="archive__count">{countLabel}</p>
+    </header>
+
+    <div class="archive__layout">
+      <div class="archive__main">
+        {
+          items.length > 0 ? (
+            <div class="archive__grid">
+              {items.map((post, index) => (
+                <PostCard post={post} headingLevel={2} priority={page === 1 && index < 2} />
+              ))}
+            </div>
+          ) : (
+            <p class="archive__empty">
+              Nenhum artigo publicado aqui ainda. <a href="/blog">Ver todos os artigos</a>.
+            </p>
+          )
+        }
+
+        <Pagination page={page} totalPages={totalPages} buildHref={buildHref} />
+      </div>
+
+      <aside class="archive__sidebar">
+        <AdSlot slot={import.meta.env['PUBLIC_ADSENSE_SLOT_SIDEBAR']} position="sidebar" />
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .archive {
+    padding-top: 2.5rem;
+  }
+
+  .archive__header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  .archive__eyebrow {
+    margin-top: 0.75rem;
+  }
+
+  .archive__title {
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+    letter-spacing: var(--text-display--letter-spacing);
+    font-weight: 700;
+  }
+
+  .archive__description {
+    font-family: var(--font-serif);
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+    color: var(--c-ink-muted);
+    max-width: 52ch;
+  }
+
+  .archive__count {
+    font-size: 0.8125rem;
+    color: var(--c-ink-subtle);
+  }
+
+  .archive__layout {
+    display: grid;
+    gap: 3rem;
+    margin-top: 3rem;
+  }
+
+  .archive__grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  }
+
+  .archive__empty {
+    padding: 3rem 0;
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    color: var(--c-ink-muted);
+  }
+
+  .archive__empty a {
+    color: var(--c-ember);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .archive__sidebar {
+    display: none;
+  }
+
+  /* A coluna de anúncio só existe quando sobra largura de verdade. Espremer o
+     grid de cards para caber uma sidebar de 300px numa tela de 1024px piora a
+     leitura e não melhora a receita. */
+  @media (min-width: 1180px) {
+    .archive__layout {
+      grid-template-columns: minmax(0, 1fr) 20rem;
+      gap: 3.5rem;
+      align-items: start;
+    }
+
+    .archive__sidebar {
+      display: block;
+    }
+  }
+</style>

@@ -1,0 +1,237 @@
+---
+import PageLayout from '~/layouts/PageLayout.astro';
+import { SITE } from '~/config/site';
+
+/**
+ * Página obrigatória para a aprovação no AdSense.
+ *
+ * O Google verifica manualmente se a política menciona: uso de cookies por
+ * terceiros, o cookie DoubleClick/DART, o link de exclusão de anúncios
+ * personalizados e a possibilidade de desativar cookies no navegador. Também
+ * cobrimos LGPD e GDPR, que são exigências legais independentes do AdSense.
+ */
+
+const updatedAt = '31 de julho de 2026';
+const host = SITE.url.replace(/^https?:\/\//, '');
+---
+
+<PageLayout
+  title="Política de Privacidade"
+  eyebrow="Documento legal"
+  description={`Como o ${SITE.name} coleta, usa e protege dados pessoais, incluindo cookies de publicidade, direitos sob a LGPD e o GDPR.`}
+  updatedAt={updatedAt}
+  noindex
+>
+  <div class="prose prose-editorial">
+    <p>
+      Esta política descreve como o <strong>{SITE.name}</strong> ({host}) trata informações de quem
+      visita o site. Ela vale para todas as páginas sob este domínio.
+    </p>
+
+    <p>
+      Controlador dos dados: {SITE.author.name}. Contato para assuntos de privacidade:{' '}
+      <a href={`mailto:${SITE.author.email}`}>{SITE.author.email}</a>.
+    </p>
+
+    <h2>1. Quais dados coletamos</h2>
+
+    <h3>1.1. Dados que você fornece</h3>
+    <p>
+      Se você usar o formulário de contato, coletamos o nome, o e-mail e o conteúdo da mensagem.
+      Esses dados são processados pelo Formspree, nosso operador de formulários, e usados
+      exclusivamente para responder você. Não entram em lista de e-mail marketing e não são
+      vendidos, alugados ou cedidos a terceiros.
+    </p>
+
+    <h3>1.2. Dados coletados automaticamente</h3>
+    <p>
+      O servidor de hospedagem registra, em logs de acesso, o endereço IP, a data e hora da
+      requisição, a página acessada, o navegador e o sistema operacional. Esses registros existem
+      para segurança e diagnóstico técnico e são descartados no ciclo normal de rotação de logs do
+      provedor.
+    </p>
+
+    <p>
+      Nós mesmos não instalamos ferramentas de analytics comportamental, nem pixels de rede social,
+      nem fingerprinting. As fontes tipográficas são servidas do nosso próprio domínio, e não por
+      uma CDN de terceiros — portanto o simples ato de ler uma página aqui não envia seu IP para o
+      Google Fonts nem para qualquer outro serviço.
+    </p>
+
+    <h2>2. Cookies</h2>
+
+    <p>Cookie é um pequeno arquivo que um site grava no seu navegador. Usamos duas categorias:</p>
+
+    <h3>2.1. Armazenamento essencial (nosso)</h3>
+    <p>
+      Guardamos a sua preferência de tema (claro ou escuro) no <code>localStorage</code> do seu navegador,
+      sob a chave <code>theme</code>. Esse dado nunca sai do seu dispositivo, não é enviado a nenhum
+      servidor e não identifica você. Ele existe só para que o site não volte ao tema padrão a cada
+      visita.
+    </p>
+
+    <h3>2.2. Cookies de publicidade (terceiros)</h3>
+    <p>
+      Este site é sustentado por publicidade e utiliza o <strong>Google AdSense</strong>. Sobre
+      isso, você precisa saber o seguinte:
+    </p>
+
+    <ul>
+      <li>
+        Fornecedores terceiros, incluindo o Google, usam cookies para veicular anúncios com base em
+        visitas anteriores suas a este site ou a outros sites.
+      </li>
+      <li>
+        O uso pelo Google de cookies de publicidade — entre eles o cookie{' '}
+        <strong>DoubleClick DART</strong> — permite que ele e seus parceiros exibam anúncios para você
+        com base nessas visitas.
+      </li>
+      <li>
+        Você pode desativar a publicidade personalizada nas{' '}
+        <a
+          href="https://www.google.com/settings/ads"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+        >
+          Configurações de anúncios do Google
+        </a>
+        .
+      </li>
+      <li>
+        Para desativar o uso de cookies por outros fornecedores terceiros, visite{' '}
+        <a
+          href="https://www.aboutads.info/choices/"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+        >
+          aboutads.info/choices
+        </a>{' '}
+        ou{' '}
+        <a
+          href="https://optout.networkadvertising.org/"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+        >
+          optout.networkadvertising.org
+        </a>
+        .
+      </li>
+      <li>
+        Detalhes sobre como o Google trata dados em seus produtos de publicidade estão em{' '}
+        <a
+          href="https://policies.google.com/technologies/partner-sites"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+        >
+          policies.google.com/technologies/partner-sites
+        </a>
+        .
+      </li>
+    </ul>
+
+    <p>
+      Você também pode bloquear ou apagar cookies diretamente nas configurações do seu navegador.
+      Nenhuma funcionalidade deste site depende de cookies de publicidade — bloqueá-los não impede a
+      leitura de nada.
+    </p>
+
+    <h2>3. Base legal e seus direitos (LGPD)</h2>
+
+    <p>
+      Para quem está no Brasil, o tratamento segue a Lei nº 13.709/2018 (LGPD). As bases legais que
+      usamos são o <em>consentimento</em> (formulário de contato e cookies de publicidade) e o{' '}
+      <em>legítimo interesse</em> (logs de segurança do servidor).
+    </p>
+
+    <p>Você tem direito a, a qualquer momento e gratuitamente:</p>
+
+    <ul>
+      <li>confirmar se tratamos dados seus e acessá-los;</li>
+      <li>corrigir dados incompletos, inexatos ou desatualizados;</li>
+      <li>solicitar anonimização, bloqueio ou eliminação de dados desnecessários;</li>
+      <li>solicitar a portabilidade dos dados;</li>
+      <li>revogar o consentimento e pedir a eliminação dos dados tratados com base nele;</li>
+      <li>obter informação sobre com quem compartilhamos seus dados.</li>
+    </ul>
+
+    <p>
+      Para exercer qualquer um desses direitos, escreva para{' '}
+      <a href={`mailto:${SITE.author.email}`}>{SITE.author.email}</a>. Respondemos em até 15 dias.
+    </p>
+
+    <h2>4. Visitantes na União Europeia e no Reino Unido (GDPR)</h2>
+
+    <p>
+      Para visitantes no Espaço Econômico Europeu ou no Reino Unido, aplica-se o Regulamento Geral
+      sobre a Proteção de Dados. Além dos direitos listados acima, você tem direito de se opor ao
+      tratamento, de solicitar a limitação do tratamento e de apresentar reclamação à autoridade de
+      proteção de dados do seu país.
+    </p>
+
+    <p>
+      Cookies de publicidade não essenciais só são ativados nessas regiões mediante consentimento,
+      coletado pela ferramenta de mensagens de privacidade do Google conforme exigido pela política
+      de consentimento do usuário da UE. Você pode rever ou revogar essa escolha a qualquer momento
+      pelo próprio aviso de consentimento ou pelas configurações de anúncios do Google.
+    </p>
+
+    <h2>5. Compartilhamento de dados</h2>
+
+    <p>Compartilhamos dados apenas com os operadores necessários para o site funcionar:</p>
+
+    <ul>
+      <li>
+        <strong>Google AdSense</strong> — veiculação e mensuração de anúncios.
+      </li>
+      <li>
+        <strong>Formspree</strong> — recebimento das mensagens do formulário de contato.
+      </li>
+      <li>
+        <strong>Provedor de hospedagem</strong> — entrega das páginas e logs de acesso.
+      </li>
+    </ul>
+
+    <p>
+      Não vendemos dados pessoais. Só divulgamos informações por ordem judicial ou exigência legal
+      expressa.
+    </p>
+
+    <h2>6. Retenção</h2>
+
+    <p>
+      Mensagens do formulário de contato são mantidas enquanto forem úteis para o histórico da
+      conversa e apagadas mediante pedido. Logs de acesso seguem o ciclo de rotação do provedor de
+      hospedagem. Cookies de terceiros seguem os prazos definidos por quem os emite.
+    </p>
+
+    <h2>7. Segurança</h2>
+
+    <p>
+      O site é servido exclusivamente por HTTPS. Como se trata de um site estático, não mantemos
+      banco de dados de usuários, não temos área de login e não armazenamos senhas — não existe,
+      aqui, um banco de credenciais para ser vazado.
+    </p>
+
+    <h2>8. Crianças</h2>
+
+    <p>
+      Este site não se destina a menores de 13 anos e não coleta conscientemente dados dessa faixa
+      etária. Se você é responsável e acredita que uma criança nos enviou dados, escreva para o
+      e-mail acima e eliminaremos o registro.
+    </p>
+
+    <h2>9. Links externos</h2>
+
+    <p>
+      Nossos artigos citam e linkam fontes de terceiros. Não controlamos esses sites e não
+      respondemos pelas práticas de privacidade deles. Leia as políticas de cada um.
+    </p>
+
+    <h2>10. Alterações nesta política</h2>
+
+    <p>
+      Se esta política mudar, a nova versão passa a valer a partir da data de publicação indicada no
+      topo desta página. Mudanças relevantes são sinalizadas na página inicial.
+    </p>
+  </div>
+</PageLayout>

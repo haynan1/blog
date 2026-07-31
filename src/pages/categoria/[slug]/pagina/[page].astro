@@ -1,0 +1,43 @@
+---
+import ArchiveLayout from '~/layouts/ArchiveLayout.astro';
+import { CATEGORIES, type Category } from '~/config/categories';
+import { getPosts, pageNumbersAfterFirst, paginate, type Post } from '~/lib/posts';
+import { SITE } from '~/config/site';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+
+  return CATEGORIES.flatMap((category) => {
+    const categoryPosts = posts.filter((post) => post.data.category === category.slug);
+
+    return pageNumbersAfterFirst(categoryPosts.length, SITE.postsPerPage).map((page) => ({
+      params: { slug: category.slug, page: String(page) },
+      props: { category, page, posts: categoryPosts },
+    }));
+  });
+}
+
+interface Props {
+  category: Category;
+  page: number;
+  posts: Post[];
+}
+
+const { category, page, posts } = Astro.props;
+
+const base = `/categoria/${category.slug}`;
+const buildHref = (target: number) => (target === 1 ? base : `${base}/pagina/${target}`);
+const paginated = paginate(posts, page, SITE.postsPerPage, buildHref);
+---
+
+<ArchiveLayout
+  eyebrow="Categoria"
+  title={category.name}
+  description={category.description}
+  crumbs={[
+    { name: 'Blog', href: '/blog' },
+    { name: category.name, href: base },
+  ]}
+  paginated={paginated}
+  buildHref={buildHref}
+/>

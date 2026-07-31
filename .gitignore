@@ -1,0 +1,42 @@
+# Build
+dist/
+.astro/
+.output/
+
+# Dependências
+node_modules/
+
+# Ambiente — NUNCA versionar. Use .env.example como modelo.
+.env
+.env.*
+!.env.example
+
+# Python venv herdada da pasta (não faz parte deste projeto)
+venv/
+
+# Logs e caches
+*.log
+npm-debug.log*
+.eslintcache
+.cache/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+
+# Credenciais de FTP de clientes de deploy — não devem sair da máquina
+.ftpconfig
+.vscode/sftp.json
+ftp-config.json
+
+# Manual de uso pessoal. A documentação versionada é o README.md e o
+# ARCHITECTURE.md; este arquivo é o caderno de anotações da máquina local.
+MANUAL.md

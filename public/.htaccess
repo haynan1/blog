@@ -1,0 +1,220 @@
+# ============================================================================
+#  Contracorrente — configuração Apache para hospedagem compartilhada
+#  (Hostgator / cPanel)
+#
+#  Todo bloco está dentro de <IfModule>. Numa hospedagem compartilhada você não
+#  controla quais módulos estão habilitados, e uma diretiva de módulo ausente
+#  derruba o site inteiro com 500 — não apenas o recurso afetado.
+#
+#  Ordem: segurança → HTTPS → URLs → cache → compressão → erros.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+#  1. Blindagem básica
+# ----------------------------------------------------------------------------
+
+# Sem listagem de diretório: /_astro/ não deve virar um índice navegável.
+Options -Indexes
+
+# Não anunciar versão do Apache/PHP nos cabeçalhos.
+ServerSignature Off
+
+# Arquivos ocultos (.env, .git, .htaccess) nunca devem ser servidos.
+# O upload por FTP pode levar junto algo que não deveria estar lá.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
+<FilesMatch "\.(env|json|lock|log|bak|config|yml|yaml|md|mjs|ts)$">
+  Require all denied
+</FilesMatch>
+
+# ads.txt e robots.txt precisam continuar públicos.
+<FilesMatch "^(ads|robots|app-ads)\.txt$">
+  Require all granted
+</FilesMatch>
+
+# ----------------------------------------------------------------------------
+#  2. Cabeçalhos de segurança
+# ----------------------------------------------------------------------------
+
+<IfModule mod_headers.c>
+  # Impede que o navegador "adivinhe" o tipo do arquivo e execute um upload
+  # como script.
+  Header always set X-Content-Type-Options "nosniff"
+
+  # Só o próprio site pode nos colocar em iframe.
+  Header always set X-Frame-Options "SAMEORIGIN"
+
+  # Não vazar a URL completa como referrer para domínios externos.
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Nenhuma página aqui precisa de câmera, microfone ou geolocalização.
+  # `browsing-topics=()` recusa explicitamente a Topics API do Chrome.
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+
+  # HSTS: só ative depois de confirmar que o HTTPS funciona em TODOS os
+  # subdomínios. Um erro aqui deixa o site inacessível por 1 ano nos
+  # navegadores que já receberam o cabeçalho.
+  # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+  # --------------------------------------------------------------------------
+  #  Content Security Policy
+  #
+  #  `'unsafe-inline'` em script-src é uma exigência real do AdSense: o script
+  #  do Google injeta trechos inline durante a veiculação, e removê-los quebra
+  #  a monetização. O risco residual aqui é baixo por construção — o site é
+  #  100% estático, não tem login, não tem cookie próprio e não renderiza
+  #  nenhuma entrada de usuário.
+  #
+  #  As diretivas que de fato contêm dano continuam fechadas:
+  #  `object-src 'none'` (sem Flash/applets), `base-uri 'self'` (sem sequestro
+  #  de URL relativa) e `form-action` restrito ao Formspree.
+  #
+  #  Se um dia os anúncios saírem, troque por:
+  #  script-src 'self'; style-src 'self' 'unsafe-inline'; frame-src 'none';
+  # --------------------------------------------------------------------------
+  Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://formspree.io; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://partner.googleadservices.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://adservice.google.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://formspree.io; frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com; upgrade-insecure-requests"
+
+  # Fontes servidas do próprio domínio — mantém o CORS explícito para o caso
+  # de o site passar a ser servido também por um subdomínio de CDN.
+  <FilesMatch "\.(woff2?|ttf|otf|eot)$">
+    Header set Access-Control-Allow-Origin "*"
+  </FilesMatch>
+</IfModule>
+
+# ----------------------------------------------------------------------------
+#  3. HTTPS e normalização de URL
+# ----------------------------------------------------------------------------
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # HTTPS obrigatório. `%{HTTPS} off` sozinho não funciona atrás do proxy de
+  # algumas hospedagens; a segunda condição cobre esse caso.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+  # Uma única forma canônica com www. Se preferir o domínio sem www, troque
+  # este bloco pelo bloco comentado logo abaixo.
+  RewriteCond %{HTTP_HOST} ^(?!www\.)(.+)$ [NC]
+  RewriteRule ^(.*)$ https://www.%1/$1 [R=301,L]
+
+  # Alternativa sem www:
+  # RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  # RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+  # Remove a barra final para bater com `trailingSlash: 'never'` do Astro.
+  # A condição de diretório evita que o Apache entre em loop com as pastas
+  # reais geradas pelo build (`/blog/post/index.html`).
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} !^/$
+  RewriteRule ^(.*)/$ /$1 [R=301,L]
+
+  # URL limpa → index.html da pasta correspondente. É o que faz `/blog/post`
+  # servir `/blog/post/index.html` sem que a barra final apareça na barra de
+  # endereços.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME}/index.html -f
+  RewriteRule ^(.*)$ /$1/index.html [L]
+</IfModule>
+
+# ----------------------------------------------------------------------------
+#  4. Cache
+# ----------------------------------------------------------------------------
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # Assets com hash no nome (/_astro/*) podem ser cacheados para sempre: se o
+  # conteúdo muda, o nome do arquivo muda junto.
+  ExpiresByType text/css                  "access plus 1 year"
+  ExpiresByType application/javascript    "access plus 1 year"
+  ExpiresByType text/javascript           "access plus 1 year"
+  ExpiresByType font/woff2                "access plus 1 year"
+  ExpiresByType font/woff                 "access plus 1 year"
+
+  ExpiresByType image/webp                "access plus 1 year"
+  ExpiresByType image/avif                "access plus 1 year"
+  ExpiresByType image/jpeg                "access plus 1 year"
+  ExpiresByType image/png                 "access plus 1 year"
+  ExpiresByType image/svg+xml             "access plus 1 year"
+  ExpiresByType image/x-icon              "access plus 1 year"
+
+  # HTML fica com cache curto: é o que precisa refletir um post novo logo
+  # depois do upload.
+  ExpiresByType text/html                 "access plus 10 minutes"
+  ExpiresByType application/xml           "access plus 1 hour"
+  ExpiresByType application/rss+xml       "access plus 1 hour"
+  ExpiresByType text/plain                "access plus 1 day"
+</IfModule>
+
+<IfModule mod_headers.c>
+  # `immutable` evita até a requisição de revalidação nos assets versionados.
+  <FilesMatch "\.(css|js|woff2|woff|webp|avif|jpg|jpeg|png|gif|svg|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=600, must-revalidate"
+  </FilesMatch>
+
+  <FilesMatch "\.(xml|txt)$">
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+
+  # ETag baseado em inode quebra quando o arquivo é reenviado por FTP: o
+  # conteúdo é o mesmo mas o inode muda, invalidando o cache sem motivo.
+  Header unset ETag
+</IfModule>
+
+FileETag None
+
+# ----------------------------------------------------------------------------
+#  5. Compressão
+# ----------------------------------------------------------------------------
+
+# Brotli comprime ~15% melhor que gzip. Nem toda hospedagem compartilhada
+# habilita o módulo — daí o mod_deflate logo abaixo como garantia.
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/xml
+  AddOutputFilterByType BROTLI_COMPRESS application/javascript text/javascript
+  AddOutputFilterByType BROTLI_COMPRESS application/json application/xml
+  AddOutputFilterByType BROTLI_COMPRESS application/rss+xml image/svg+xml
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+  AddOutputFilterByType DEFLATE application/javascript text/javascript
+  AddOutputFilterByType DEFLATE application/json application/xml
+  AddOutputFilterByType DEFLATE application/rss+xml image/svg+xml
+  AddOutputFilterByType DEFLATE application/x-font-ttf font/opentype
+
+  # WebP, AVIF e woff2 já são comprimidos — recomprimir só gasta CPU.
+  SetEnvIfNoCase Request_URI \.(?:woff2?|webp|avif|jpe?g|png|gif|ico|zip|gz)$ no-gzip dont-vary
+</IfModule>
+
+# ----------------------------------------------------------------------------
+#  6. Tipos MIME
+# ----------------------------------------------------------------------------
+
+<IfModule mod_mime.c>
+  AddType font/woff2 .woff2
+  AddType image/webp .webp
+  AddType image/avif .avif
+  AddType image/svg+xml .svg
+  AddType application/rss+xml .xml
+
+  AddDefaultCharset UTF-8
+  AddCharset UTF-8 .html .css .js .xml .json .txt .svg
+</IfModule>
+
+# ----------------------------------------------------------------------------
+#  7. Página de erro
+# ----------------------------------------------------------------------------
+
+# Caminho absoluto a partir da raiz do site. A 404 do Astro é uma página
+# estática completa, com header e rodapé.
+ErrorDocument 404 /404.html

@@ -1,0 +1,39 @@
+---
+import ArchiveLayout from '~/layouts/ArchiveLayout.astro';
+import { getPosts, paginate } from '~/lib/posts';
+import { SITE } from '~/config/site';
+import { buildGraph, breadcrumbNode, collectionPageNode } from '~/lib/schema';
+
+/**
+ * Página 1 do blog.
+ *
+ * A paginação vive em `/blog/pagina/2` em diante, e não em `/blog/2`, para que
+ * a rota de post (`/blog/[slug]`) e a de paginação nunca disputem a mesma
+ * forma de URL — um post com slug "2" quebraria a ambiguidade em silêncio.
+ */
+
+const posts = await getPosts();
+const buildHref = (page: number) => (page === 1 ? '/blog' : `/blog/pagina/${page}`);
+const paginated = paginate(posts, 1, SITE.postsPerPage, buildHref);
+
+const title = 'Todos os artigos';
+const description =
+  'O arquivo completo do Contracorrente: ensaios e guias sobre tecnologia, negócios, produtividade e design, do mais recente ao mais antigo.';
+
+const crumbs = [{ name: 'Blog', href: '/blog' }];
+
+const jsonLd = buildGraph(
+  collectionPageNode(title, description, '/blog'),
+  breadcrumbNode([{ name: 'Início', href: '/' }, ...crumbs]),
+);
+---
+
+<ArchiveLayout
+  eyebrow="Arquivo"
+  title={title}
+  description={description}
+  crumbs={crumbs}
+  paginated={paginated}
+  buildHref={buildHref}
+  jsonLd={jsonLd}
+/>

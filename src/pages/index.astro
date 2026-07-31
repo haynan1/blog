@@ -1,0 +1,304 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PostCard from '~/components/post/PostCard.astro';
+import { getCategoriesWithCount, getFeaturedPost, getPosts } from '~/lib/posts';
+import { SITE } from '~/config/site';
+import { buildGraph } from '~/lib/schema';
+
+const posts = await getPosts();
+const featured = await getFeaturedPost(posts);
+const categories = await getCategoriesWithCount(posts);
+
+// O destaque não se repete na grade abaixo.
+const recent = posts.filter((post) => post.id !== featured?.id).slice(0, 6);
+
+const jsonLd = buildGraph();
+
+// Palavras da manchete animadas individualmente. Quebrar no servidor, e não no
+// cliente, evita reescrever o DOM depois do paint — que custaria CLS logo no
+// elemento LCP da página.
+const headlineWords = ['Ideias', 'que', 'remam', 'contra', 'a', 'maré'];
+---
+
+<BaseLayout title="Início" description={SITE.description} jsonLd={jsonLd}>
+  <section class="hero">
+    <div class="shell hero__inner">
+      <p class="eyebrow hero__eyebrow" data-hero-item>Revista digital · pt-BR</p>
+
+      <h1 class="hero__title">
+        {
+          headlineWords.map((word, index) => (
+            <span class="hero__word">
+              <span class="hero__word-inner" data-hero-word style={`--i:${index}`}>
+                {word}
+              </span>
+            </span>
+          ))
+        }
+      </h1>
+
+      <p class="hero__lead" data-hero-item>{SITE.description}</p>
+
+      <div class="hero__actions" data-hero-item>
+        <a href="/blog" class="btn btn-primary">Ler os artigos</a>
+        <a href="/sobre" class="btn btn-ghost">Sobre o projeto</a>
+      </div>
+    </div>
+
+    <div class="hero__rule shell" aria-hidden="true"><span class="rule"></span></div>
+  </section>
+
+  {
+    featured && (
+      <section class="featured shell" aria-labelledby="featured-title">
+        <h2 id="featured-title" class="section-title">
+          <span class="eyebrow">Em destaque</span>
+        </h2>
+        <PostCard post={featured} variant="feature" priority headingLevel={3} />
+      </section>
+    )
+  }
+
+  {
+    recent.length > 0 && (
+      <section class="recent shell" aria-labelledby="recent-title">
+        <div class="section-head">
+          <h2 id="recent-title" class="section-title">
+            <span class="eyebrow">Últimos artigos</span>
+          </h2>
+          <a href="/blog" class="section-link link-underline">
+            Ver todos <span aria-hidden="true">→</span>
+          </a>
+        </div>
+
+        <div class="recent__grid">
+          {recent.map((post) => (
+            <PostCard post={post} headingLevel={3} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    categories.length > 0 && (
+      <section class="categories shell" aria-labelledby="categories-title">
+        <h2 id="categories-title" class="section-title">
+          <span class="eyebrow">Explorar por assunto</span>
+        </h2>
+
+        <ul class="categories__grid">
+          {categories.map((category) => (
+            <li class="card category-card" data-reveal>
+              <a href={`/categoria/${category.slug}`} class="card-link category-card__link">
+                <span class="category-card__name">{category.name}</span>
+              </a>
+              <p class="category-card__description">{category.description}</p>
+              <span class="category-card__count">
+                {category.count} {category.count === 1 ? 'artigo' : 'artigos'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  /* ---- Hero ---- */
+
+  .hero {
+    padding-top: clamp(3rem, 1rem + 8vw, 7rem);
+  }
+
+  .hero__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.75rem;
+  }
+
+  .hero__title {
+    font-size: var(--text-hero);
+    line-height: var(--text-hero--line-height);
+    letter-spacing: var(--text-hero--letter-spacing);
+    font-weight: 700;
+    max-width: 14ch;
+  }
+
+  /* A palavra sobe de dentro de uma máscara. O `overflow: hidden` fica no
+     wrapper, que mantém a altura da linha — o texto nunca remede o layout. */
+  .hero__word {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+    padding-bottom: 0.06em;
+  }
+
+  .hero__word-inner {
+    display: inline-block;
+  }
+
+  :global(.motion) .hero__word-inner {
+    transform: translate3d(0, 105%, 0);
+  }
+
+  :global(.motion) .hero__eyebrow[data-hero-item],
+  :global(.motion) .hero__lead[data-hero-item],
+  :global(.motion) .hero__actions[data-hero-item] {
+    opacity: 0;
+  }
+
+  /* A quarta palavra ("contra") ganha o acento — o único uso de cor na
+     manchete, colocado exatamente na palavra que carrega o sentido. */
+  .hero__word:nth-child(4) .hero__word-inner {
+    color: var(--c-ember);
+    font-style: italic;
+  }
+
+  .hero__lead {
+    font-family: var(--font-serif);
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+    color: var(--c-ink-muted);
+    max-width: 48ch;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .hero__rule {
+    margin-top: clamp(3rem, 1rem + 6vw, 5.5rem);
+  }
+
+  .hero__rule .rule {
+    display: block;
+  }
+
+  /* ---- Seções ---- */
+
+  .featured,
+  .recent,
+  .categories {
+    margin-top: clamp(3rem, 1.5rem + 5vw, 5.5rem);
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .section-title {
+    margin-bottom: 2rem;
+  }
+
+  .section-link {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--c-ink-muted);
+    white-space: nowrap;
+  }
+
+  .section-link:hover {
+    color: var(--c-ember);
+  }
+
+  .recent__grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  }
+
+  /* ---- Categorias ---- */
+
+  .categories__grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  }
+
+  .category-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1.5rem;
+  }
+
+  .category-card__name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--c-ink);
+    transition: color 0.2s var(--ease-out-soft);
+  }
+
+  .category-card:hover .category-card__name {
+    color: var(--c-ember);
+  }
+
+  .category-card__description {
+    font-family: var(--font-serif);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--c-ink-muted);
+    flex: 1;
+  }
+
+  .category-card__count {
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-ink-subtle);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.motion) .hero__word-inner {
+      transform: none;
+    }
+
+    :global(.motion) .hero__eyebrow[data-hero-item],
+    :global(.motion) .hero__lead[data-hero-item],
+    :global(.motion) .hero__actions[data-hero-item] {
+      opacity: 1;
+    }
+
+    .category-card__name {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Sequência de entrada do hero.
+   *
+   * Só roda quando o usuário aceita movimento — o estado inicial escondido é
+   * aplicado por CSS sob `.motion`, então sem JS ou com `reduced-motion` a
+   * manchete simplesmente já está lá.
+   */
+  const playHero = async () => {
+    if (!document.documentElement.classList.contains('motion')) return;
+
+    const words = document.querySelectorAll<HTMLElement>('[data-hero-word]');
+    const items = document.querySelectorAll<HTMLElement>('[data-hero-item]');
+    if (words.length === 0) return;
+
+    const { gsap } = await import('gsap');
+
+    gsap
+      .timeline({ defaults: { ease: 'expo.out' } })
+      .to(words, { y: '0%', duration: 1.1, stagger: 0.055 })
+      // O `-=0.75` sobrepõe as duas partes: sem isso a sequência inteira
+      // levaria quase dois segundos e o usuário esperaria pela home.
+      .to(items, { opacity: 1, duration: 0.7, stagger: 0.09 }, '-=0.75');
+  };
+
+  playHero();
+  document.addEventListener('astro:page-load', playHero);
+</script>
