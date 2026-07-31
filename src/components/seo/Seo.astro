@@ -102,7 +102,15 @@ const socialImage = absoluteUrl(image ?? SITE.defaultImage);
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="#0c0a08" media="(prefers-color-scheme: dark)" />
+{
+  /* Pinta a barra do navegador no celular com a cor do papel do site, para a
+    página não terminar num degrau de cor contra o cromo do sistema.
+
+    Estes são os dois únicos valores de cor fora do `global.css`, e não há como
+    evitar: uma meta tag não lê custom property. Ficam centralizados em
+    `site.ts` e um teste garante que continuam iguais aos tokens `--c-paper`. */
+}
+<meta name="theme-color" content={SITE.themeColor.light} media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content={SITE.themeColor.dark} media="(prefers-color-scheme: dark)" />
 
 {jsonLd && <script type="application/ld+json" is:inline set:html={jsonLd} />}

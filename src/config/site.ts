@@ -33,6 +33,18 @@ export const SITE = {
     url: 'https://www.contracorrente.com.br/sobre',
   },
 
+  /**
+   * Cor da barra do navegador no celular, por tema.
+   *
+   * Precisa acompanhar o token `--c-paper` de cada tema no `global.css`.
+   * Uma meta tag nao le custom property, entao a duplicacao e inevitavel — o
+   * teste em tests/design-tokens.test.ts impede que os dois se separem.
+   */
+  themeColor: {
+    light: '#faf8f4',
+    dark: '#0c0a08',
+  },
+
   /** Imagem de fallback para Open Graph / Twitter. Mora em `public/`. */
   defaultImage: '/og-default.png',
 

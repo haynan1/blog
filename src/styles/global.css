@@ -33,6 +33,10 @@
     --c-ember: #b4432a;
     --c-ember-strong: #93341f;
     --c-ember-wash: #fbeee9;
+    /* Texto sobre a superficie de acento. Existe como token porque o valor
+       inverte entre os temas: brasa escura no claro pede texto branco, brasa
+       clara no escuro pede texto preto. */
+    --c-on-accent: #ffffff;
     --c-moss: #4a6247;
     --c-moss-wash: #eef2ec;
 
@@ -64,6 +68,7 @@
     --c-ember: #ff7a55;
     --c-ember-strong: #ff9878;
     --c-ember-wash: #24150f;
+    --c-on-accent: #17120e;
     --c-moss: #8fb389;
     --c-moss-wash: #141a13;
 
@@ -354,11 +359,7 @@
 
   .btn-primary {
     background-color: var(--c-ember);
-    color: #ffffff;
-  }
-
-  .dark .btn-primary {
-    color: #17120e;
+    color: var(--c-on-accent);
   }
 
   .btn-primary:hover {
@@ -459,6 +460,28 @@
 }
 
 /* -------------------------------------------------------------------------- */
+/* Breakpoints                                                                */
+/* -------------------------------------------------------------------------- */
+
+/*
+  O CSS ainda nao permite custom property dentro de @media de forma portavel,
+  entao os valores aparecem escritos em cada regra. A escala fica registrada
+  aqui para que o conjunto seja auditavel e ninguem invente um nono valor sem
+  motivo.
+
+  Todos sao dirigidos pelo conteudo, nao por tamanho de aparelho: o ponto de
+  quebra e onde AQUELE componente para de caber, nao onde um iPad comeca.
+
+    640px   Faixa de assuntos vira rolavel; capitular do primeiro paragrafo
+    768px   Corpo do artigo sobe para 1.25rem; respiro lateral do shell
+    860px   Card em destaque passa a ter imagem ao lado do texto
+    900px   Navegacao do header aparece; menu sanduiche some
+   1024px   Card comum atinge a largura maxima util
+   1100px   Sumario lateral do post cabe (43rem de texto + 15rem de sumario)
+   1180px   Coluna de anuncio do arquivo cabe sem espremer o grid de cards
+   1200px   Capa do post atinge a largura maxima do shell
+*/
+/* -------------------------------------------------------------------------- */
 /* Animação de entrada                                                        */
 /* -------------------------------------------------------------------------- */
 
@@ -552,8 +575,23 @@
   }
 }
 
-/* Sem client ID configurado (dev), o bloco não deve fingir que existe. */
-.ad-slot:empty,
+/*
+  Anúncio que não preencheu não deixa cicatriz.
+
+  O AdSense marca a unidade com `data-ad-status="unfilled"` quando não tem
+  anúncio para aquele leilão — acontece com frequência em nichos pequenos e em
+  tráfego de países com pouca demanda. Sem esta regra, o leitor veria uma caixa
+  com borda, a legenda "Publicidade" e 280px de nada embaixo: pior do que não
+  ter anúncio nenhum, porque parece defeito.
+
+  Colapsar depois do carregamento move o conteúdo abaixo, e isso é layout
+  shift. É uma troca consciente e ganha por larga margem: o espaço vazio
+  permanente é visível em toda visita, enquanto o shift acontece uma vez, cedo,
+  e só quando o leilão não preencheu.
+
+  A regra é só CSS — nenhum JavaScript observando o DOM.
+*/
+.ad-slot:has(ins[data-ad-status='unfilled']),
 .ad-slot[data-ad-disabled] {
   display: none;
 }

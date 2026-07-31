@@ -3,11 +3,16 @@ import { NAV_LINKS, SITE } from '~/config/site';
 import ThemeToggle from './ThemeToggle.astro';
 
 /**
- * Header fixo que encolhe ao rolar e sai de cena ao descer.
+ * Header fixo que sai de cena ao rolar para baixo e volta ao subir.
  *
- * A altura vive em `--header-height` (definida em global.css) e o encolhimento
- * é só `transform` + `padding`, nunca mudança de altura do elemento: o corpo da
- * página nunca é remedido, então o comportamento custa zero em CLS.
+ * A altura é constante — vive em `--header-height`, no global.css. Só duas
+ * coisas mudam com o scroll: a borda inferior aparece, e o header inteiro
+ * translada para fora da tela ao descer. Ambas são `border-color` e
+ * `transform`, que o navegador resolve no compositor sem remedir a página.
+ *
+ * O header é `position: sticky`, e sticky ocupa espaço no fluxo do documento.
+ * Isso significa que qualquer mudança de altura aqui empurra o conteúdo abaixo
+ * — motivo pelo qual o efeito de encolher ao rolar foi removido.
  */
 
 const path = Astro.url.pathname;
@@ -104,15 +109,19 @@ const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
     justify-content: space-between;
     gap: 1.5rem;
     height: var(--header-height);
-    transition: height 0.4s var(--ease-out-expo);
   }
 
-  /* O encolhimento mexe só na altura do conteúdo interno, que é `flex` e não
-     participa do fluxo do documento — nada abaixo é reposicionado. */
-  .site-header[data-state='scrolled'] .site-header__inner,
-  .site-header[data-state='hidden'] .site-header__inner {
-    height: calc(var(--header-height) - 0.75rem);
-  }
+  /*
+     O header NÃO encolhe ao rolar. Havia aqui uma transição de `height` no
+     conteúdo interno, com um comentário afirmando que nada abaixo se moveria.
+     Estava errado: um elemento `position: sticky` ocupa espaço no fluxo, então
+     reduzir a altura dele puxava a página inteira 12px para cima — a cada
+     mudança de estado, animando uma propriedade que força layout em todo frame.
+
+     Doze pixels de encolhimento não valem tremor no texto durante a leitura. O
+     que comunica o estado de rolagem já são duas coisas de custo zero: a borda
+     inferior que aparece, e o header inteiro saindo de cena ao descer — as duas
+     por `transform` e `border-color`, que rodam no compositor. */
 
   .skip-link {
     position: absolute;
