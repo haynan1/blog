@@ -95,7 +95,10 @@ export default defineConfig({
     sitemap({
       // Rascunhos e páginas legais não precisam competir por crawl budget.
       filter: (page) =>
-        !page.includes('/politica-de-privacidade') && !page.includes('/termos-de-uso'),
+        !page.includes('/politica-de-privacidade') &&
+        !page.includes('/termos-de-uso') &&
+        // O painel de edicao nao e conteudo.
+        !page.includes('/admin'),
       serialize(item) {
         if (item.url === `${SITE.url}/`) {
           item.changefreq = ChangeFreqEnum.DAILY;

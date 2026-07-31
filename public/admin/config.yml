@@ -1,0 +1,202 @@
+# ============================================================================
+#  Sveltia CMS — configuração do painel de edição
+#
+#  ATENÇÃO: este arquivo precisa espelhar `src/content.config.ts`.
+#  Se os dois divergirem, o painel deixa você salvar um post que o build vai
+#  rejeitar depois — e você só descobre na hora de publicar. Ao mudar o schema
+#  Zod, mude aqui junto.
+#
+#  Documentação: https://sveltiacms.app/en/docs
+# ============================================================================
+
+backend:
+  name: github
+  # TROCAR: usuário/organização e nome do repositório no GitHub.
+  repo: SEU-USUARIO/blog
+  branch: main
+
+  # Só login por token de acesso pessoal.
+  #
+  # A alternativa (`oauth`) exigiria registrar um GitHub App e manter um
+  # servidor de autenticação no ar — infraestrutura permanente para resolver
+  # login de uma única pessoa. Com `token`, você cola um Personal Access Token
+  # de escopo mínimo e o navegador guarda localmente.
+  auth_methods:
+    - token
+
+  # Mensagens de commit em português, para o histórico do git continuar legível
+  # quando você olhar daqui a seis meses.
+  commit_messages:
+    create: 'Post: {{slug}}'
+    update: 'Atualiza post: {{slug}}'
+    delete: 'Remove post: {{slug}}'
+    uploadMedia: 'Adiciona imagem: {{path}}'
+    deleteMedia: 'Remove imagem: {{path}}'
+
+# Publicação direta na branch principal. `editorial_workflow` criaria um pull
+# request por rascunho — útil para uma redação com revisor, peso morto para um
+# autor só. O campo `draft` no post já cobre "escrito mas não publicado".
+publish_mode: simple
+
+site_url: https://www.contracorrente.com.br
+display_url: https://www.contracorrente.com.br
+logo_url: /logo.png
+
+app_title: Contracorrente · Editor
+
+# Acentos viram ASCII no nome do arquivo — e o nome do arquivo é a URL.
+# Sem isso, "Não construa para o passado" viraria uma URL com %C3%A3.
+slug:
+  encoding: ascii
+  clean_accents: true
+  sanitize_replacement: '-'
+
+# Imagens vão para o mesmo lugar que o Astro otimiza no build.
+media_folder: src/assets/blog
+public_folder: /src/assets/blog
+
+collections:
+  - name: blog
+    label: Artigos
+    label_singular: Artigo
+    description: >-
+      Cada arquivo vira uma página. O nome do arquivo é a URL, então evite
+      mudá-lo depois de publicado.
+    folder: src/content/blog
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    slug: '{{slug}}'
+    icon: article
+    summary: '{{title}}'
+    sortable_fields:
+      - pubDate
+      - title
+      - category
+
+    # Caminho relativo a partir da pasta do post — é o formato que o
+    # `image()` do Astro espera para otimizar a imagem no build.
+    media_folder: '../../assets/blog'
+    public_folder: '../../assets/blog'
+
+    fields:
+      - name: title
+        label: Título
+        widget: string
+        required: true
+        hint: 'Entre 10 e 110 caracteres. Vira o H1 da página e o título no Google.'
+        pattern:
+          - '^.{10,110}$'
+          - 'O título precisa ter entre 10 e 110 caracteres.'
+
+      - name: description
+        label: Descrição
+        widget: text
+        required: true
+        hint: >-
+          Entre 70 e 180 caracteres. Vira a meta description no Google e o texto
+          do card na listagem. É o que decide se a pessoa clica.
+        pattern:
+          - '^[\s\S]{70,180}$'
+          - 'A descrição precisa ter entre 70 e 180 caracteres.'
+
+      - name: pubDate
+        label: Data de publicação
+        widget: datetime
+        required: true
+        format: 'YYYY-MM-DD'
+        date_format: 'DD/MM/YYYY'
+        time_format: false
+        picker_utc: true
+
+      - name: updatedDate
+        label: Data de revisão
+        widget: datetime
+        required: false
+        format: 'YYYY-MM-DD'
+        date_format: 'DD/MM/YYYY'
+        time_format: false
+        picker_utc: true
+        hint: >-
+          Preencha só quando revisar o conteúdo de verdade. Aparece como
+          "Atualizado em" no topo do post.
+
+      - name: category
+        label: Categoria
+        widget: select
+        required: true
+        options:
+          - { label: 'Tecnologia', value: 'tecnologia' }
+          - { label: 'Negócios', value: 'negocios' }
+          - { label: 'Produtividade', value: 'produtividade' }
+          - { label: 'Design', value: 'design' }
+
+      - name: tags
+        label: Tags
+        widget: list
+        required: true
+        min: 1
+        max: 8
+        hint: 'De 1 a 8. Alimentam a seção "Continue lendo" no fim do post.'
+
+      - name: image
+        label: Imagem de capa
+        widget: image
+        required: true
+        choose_url: false
+        hint: 'Mínimo 1600px de largura. O site gera as versões otimizadas sozinho.'
+
+      - name: imageAlt
+        label: Descrição da capa
+        widget: string
+        required: true
+        hint: >-
+          O que se vê na imagem. Não aparece na tela — é lido por leitores de
+          tela e usado pelo Google.
+        pattern:
+          - '^.{5,}$'
+          - 'A descrição precisa ter pelo menos 5 caracteres.'
+
+      - name: imageCredit
+        label: Crédito da capa
+        widget: string
+        required: false
+        hint: 'Obrigatório quando a foto for de terceiro. Ex.: "Foto: Nome / Unsplash".'
+
+      - name: draft
+        label: Rascunho
+        widget: boolean
+        required: false
+        default: true
+        hint: 'Ligado = não vai para o site publicado. Desligue quando estiver pronto.'
+
+      - name: featured
+        label: Destaque na home
+        widget: boolean
+        required: false
+        default: false
+        hint: 'Só um post deveria estar ligado. Havendo mais, vence o mais recente.'
+
+      - name: author
+        label: Autor
+        widget: string
+        required: false
+        hint: 'Deixe vazio para usar o autor padrão do site.'
+
+      - name: sources
+        label: Fontes
+        widget: list
+        required: false
+        label_singular: Fonte
+        summary: '{{fields.label}}'
+        fields:
+          - { name: label, label: Nome da fonte, widget: string, required: true }
+          - { name: url, label: Endereço, widget: string, required: true }
+        hint: >-
+          Renderizadas ao final do post. Citar fontes dá credibilidade e é sinal
+          de originalidade na revisão manual do AdSense.
+
+      - name: body
+        label: Texto
+        widget: markdown
+        required: true

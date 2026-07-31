@@ -1,0 +1,122 @@
+name: Publicar na Hostgator
+
+# ============================================================================
+#  Compila o site e envia por FTP a cada mudança na branch principal.
+#
+#  É o que fecha o ciclo do painel: você salva um post em /admin, o Sveltia CMS
+#  faz commit neste repositório, e este workflow gera e publica. Nenhum
+#  computador precisa estar ligado.
+#
+#  Pré-requisitos (uma vez só) — em Settings → Secrets and variables → Actions:
+#
+#    Secrets (valores sensíveis, nunca aparecem no log):
+#      FTP_SERVER     ftp.seudominio.com.br
+#      FTP_USERNAME   usuário da conta de FTP do cPanel
+#      FTP_PASSWORD   senha dessa conta
+#
+#    Variables (públicas por natureza, embutidas no HTML):
+#      PUBLIC_ADSENSE_CLIENT
+#      PUBLIC_ADSENSE_SLOT_IN_ARTICLE
+#      PUBLIC_ADSENSE_SLOT_MID_CONTENT
+#      PUBLIC_ADSENSE_SLOT_FOOTER
+#      PUBLIC_ADSENSE_SLOT_SIDEBAR
+#      PUBLIC_FORMSPREE_ENDPOINT
+# ============================================================================
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      # Mudança só em documentação não gera site diferente — não gasta minuto
+      # de Actions nem reenvia arquivos idênticos por FTP.
+      - '**.md'
+      - '.github/**'
+      - '!.github/workflows/deploy.yml'
+
+  # Permite disparar manualmente pela aba Actions, útil para republicar sem
+  # precisar inventar um commit.
+  workflow_dispatch:
+
+# Duas publicações simultâneas competindo pelo mesmo FTP deixariam o servidor
+# num estado misturado. A segunda espera a primeira terminar.
+concurrency:
+  group: deploy-producao
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publicar:
+    name: Compilar e enviar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar o Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        # `npm ci` instala exatamente o que está no package-lock. `npm install`
+        # poderia resolver uma versão diferente da testada e publicar um site
+        # que ninguém verificou.
+        run: npm ci
+
+      - name: Verificar e compilar
+        # Roda formatação, tipos, os testes e o build. Se qualquer um falhar, o
+        # job para aqui e NADA é enviado — o site no ar continua intacto.
+        run: npm run verify
+        env:
+          PUBLIC_ADSENSE_CLIENT: ${{ vars.PUBLIC_ADSENSE_CLIENT }}
+          PUBLIC_ADSENSE_SLOT_IN_ARTICLE: ${{ vars.PUBLIC_ADSENSE_SLOT_IN_ARTICLE }}
+          PUBLIC_ADSENSE_SLOT_MID_CONTENT: ${{ vars.PUBLIC_ADSENSE_SLOT_MID_CONTENT }}
+          PUBLIC_ADSENSE_SLOT_FOOTER: ${{ vars.PUBLIC_ADSENSE_SLOT_FOOTER }}
+          PUBLIC_ADSENSE_SLOT_SIDEBAR: ${{ vars.PUBLIC_ADSENSE_SLOT_SIDEBAR }}
+          PUBLIC_FORMSPREE_ENDPOINT: ${{ vars.PUBLIC_FORMSPREE_ENDPOINT }}
+
+      - name: Conferir o que foi gerado
+        # Barreira contra publicar um build vazio ou quebrado. Um `dist/` sem
+        # index.html chegando no FTP derrubaria a home.
+        run: |
+          test -f dist/index.html || { echo "::error::dist/index.html não existe"; exit 1; }
+          test -f dist/.htaccess  || { echo "::error::dist/.htaccess não existe"; exit 1; }
+          test -f dist/blog/index.html || { echo "::error::listagem do blog não existe"; exit 1; }
+          echo "  páginas geradas: $(find dist -name 'index.html' | wc -l)"
+          echo "  tamanho total:   $(du -sh dist | cut -f1)"
+
+      - name: Enviar por FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./dist/
+          server-dir: ./public_html/
+          # A ação mantém um estado no servidor e envia só o que mudou —
+          # e REMOVE o que você apagou aqui. É o que resolve a armadilha do
+          # upload manual, em que um post apagado continuava no ar para sempre.
+          state-name: .ftp-deploy-sync-state.json
+          # O estado e os arquivos do painel de senha do cPanel não devem ser
+          # tocados pela sincronização.
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .ftp-deploy-sync-state.json
+            **/.htpasswd*
+
+      - name: Resumo
+        if: success()
+        run: |
+          echo "### Publicado" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: \`${GITHUB_SHA::7}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Páginas: $(find dist -name 'index.html' | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "- Site: https://www.contracorrente.com.br" >> $GITHUB_STEP_SUMMARY

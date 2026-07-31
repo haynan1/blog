@@ -11,6 +11,10 @@ Allow: /
 User-agent: AdsBot-Google
 Allow: /
 
+# Painel de edição. Não é conteúdo, e exige token do GitHub para fazer
+# qualquer coisa — mas não há motivo para gastar crawl budget com ele.
+Disallow: /admin
+
 # Páginas legais não precisam de crawl budget: são obrigatórias, não são
 # conteúdo de busca. Também estão como noindex no HTML.
 Disallow: /politica-de-privacidade

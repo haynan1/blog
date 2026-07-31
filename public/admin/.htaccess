@@ -1,0 +1,67 @@
+# ============================================================================
+#  Regras específicas do painel de edição (/admin)
+#
+#  Este arquivo existe para corrigir duas colisões com o .htaccess da raiz, que
+#  foi escrito para o site público e trata /admin com as regras erradas.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+#  1. Liberar o config.yml
+#
+#  O .htaccess da raiz nega qualquer `.yml` — regra correta para o site, onde
+#  um arquivo de configuração exposto seria vazamento. Mas o painel PRECISA
+#  buscar o próprio config por HTTP, senão abre numa tela de erro.
+#
+#  O arquivo não contém segredo: só o nome do repositório e a descrição dos
+#  campos. O que protege o conteúdo é o token do GitHub, que nunca sai do
+#  navegador de quem edita.
+# ----------------------------------------------------------------------------
+
+<Files "config.yml">
+  Require all granted
+</Files>
+
+# ----------------------------------------------------------------------------
+#  2. Cache
+#
+#  O .htaccess da raiz marca todo `.js` como `immutable` por um ano — correto
+#  para os arquivos de `_astro/`, que trazem hash no nome. O bundle do CMS não
+#  tem hash: com aquela regra, uma atualização do painel nunca chegaria ao
+#  navegador. Aqui ele passa a revalidar sempre.
+# ----------------------------------------------------------------------------
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|yml|html)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # --------------------------------------------------------------------------
+  #  3. Content Security Policy do painel
+  #
+  #  A política da raiz libera os domínios do AdSense e nada mais — o painel
+  #  precisa falar com a API do GitHub, e o AdSense não tem nada a fazer aqui.
+  #  Por isso a política é substituída inteira nesta pasta, em vez de afrouxar
+  #  a do site.
+  #
+  #  Continua fechado onde importa: `object-src 'none'`, `base-uri 'self'`,
+  #  `frame-ancestors 'none'` (o painel nunca deve ser embutido em iframe) e
+  #  `form-action 'none'` (o CMS envia tudo por fetch).
+  # --------------------------------------------------------------------------
+  Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'none'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://avatars.githubusercontent.com https://*.githubusercontent.com; font-src 'self' data:; connect-src 'self' https://api.github.com https://github.com https://*.githubusercontent.com; upgrade-insecure-requests"
+
+  # O painel não é conteúdo: fora do índice de qualquer buscador.
+  Header always set X-Robots-Tag "noindex, nofollow"
+</IfModule>
+
+# ----------------------------------------------------------------------------
+#  4. Opcional: senha no painel
+#
+#  Sem token do GitHub ninguém edita nada, então deixar /admin aberto não
+#  expõe conteúdo. Se ainda assim quiser uma camada extra, gere um arquivo de
+#  senha no cPanel (Diretórios protegidos por senha) e descomente:
+#
+#  AuthType Basic
+#  AuthName "Editor"
+#  AuthUserFile /home/SEU_USUARIO/.htpasswds/admin/passwd
+#  Require valid-user
+# ----------------------------------------------------------------------------

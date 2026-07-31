@@ -5,3 +5,6 @@ venv/
 package-lock.json
 public/.htaccess
 public/rss.xsl
+
+# Bundle de terceiro, minificado — 2,3 MB que o Prettier nao deve tocar
+public/admin/sveltia-cms.js

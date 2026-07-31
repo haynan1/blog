@@ -2,6 +2,8 @@
 dist/
 .astro/
 .output/
+# Bundle do painel: copiado de node_modules a cada build por scripts/sync-cms.mjs
+public/admin/sveltia-cms.js
 
 # Dependências
 node_modules/
