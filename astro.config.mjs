@@ -8,6 +8,7 @@ import { loadEnv } from 'vite';
 
 import { SITE } from './src/config/site.ts';
 import { satteriAdSlots } from './src/plugins/satteri-ad-slots.mjs';
+import { satteriImageSizes } from './src/plugins/satteri-image-sizes.mjs';
 
 // `import.meta.env` não existe durante o carregamento do config, e variáveis do
 // `.env` não chegam sozinhas em `process.env`. `loadEnv` é a forma suportada de
@@ -46,6 +47,7 @@ export default defineConfig({
             midContent: env.PUBLIC_ADSENSE_SLOT_MID_CONTENT,
           },
         }),
+        satteriImageSizes(),
       ],
     }),
     shikiConfig: {
@@ -110,6 +112,21 @@ export default defineConfig({
   image: {
     // `sharp` roda só no build local; nada disso vai para a Hostgator.
     service: { entrypoint: 'astro/assets/services/sharp' },
+
+    // Torna responsiva toda imagem que não passa por um componente — na
+    // prática, as que o autor escreve como `![alt](caminho)` no Markdown.
+    // Sem isso elas saem com `srcset` vazio, e um celular baixaria o arquivo
+    // de 1600px inteiro.
+    //
+    // Os componentes `<Image>` do PostCard e da capa do post declaram
+    // `layout="none"`: ali os `widths`/`sizes` são calculados à mão para o
+    // tamanho real do card, o que é mais preciso que a heurística global.
+    layout: 'constrained',
+
+    // Os estilos que o `constrained` precisa (`max-width`, `height: auto`,
+    // `object-fit`) já estão na camada base do global.css. Deixar o Astro
+    // injetar os dele criaria uma segunda fonte de verdade para a mesma regra.
+    responsiveStyles: false,
   },
 
   vite: {

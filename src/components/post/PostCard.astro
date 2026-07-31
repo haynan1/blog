@@ -33,6 +33,7 @@ const sizes = {
     variant !== 'compact' && (
       <div class="post-card__media">
         <Image
+          layout="none"
           src={post.data.image}
           alt={post.data.imageAlt}
           widths={variant === 'feature' ? [480, 800, 1280] : [320, 480, 800]}

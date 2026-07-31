@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
+    "stop": "node scripts/stop.mjs",
     "build": "astro check && astro build --force",
     "build:fast": "astro build",
     "preview": "astro preview",
