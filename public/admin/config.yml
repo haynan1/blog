@@ -11,8 +11,11 @@
 
 backend:
   name: github
-  # TROCAR: usuário/organização e nome do repositório no GitHub.
-  repo: SEU-USUARIO/blog
+  # Precisa ser idêntico ao remote `origin` deste repositório. Um teste em
+  # tests/cms-config.test.ts trava os dois juntos: se divergirem, o painel
+  # tenta gravar num repositório que não existe e falha no login, sem dizer
+  # por quê.
+  repo: haynan1/blog
   branch: main
 
   # Só login por token de acesso pessoal.

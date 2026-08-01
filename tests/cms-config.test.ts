@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
@@ -94,5 +95,33 @@ describe('painel /admin espelha o schema de conteúdo', () => {
 
   it('usa apenas login por token, sem exigir servidor de OAuth', () => {
     expect(configYml).toMatch(/auth_methods:\s*\n\s*- token/);
+  });
+});
+
+describe('painel aponta para o repositório certo', () => {
+  it('o `repo` do config bate com o remote origin', () => {
+    // Esta foi a causa de um bug real: o config ficou com o placeholder
+    // `SEU-USUARIO/blog` depois que o remote já existia. O painel abre
+    // normalmente, aceita o token, e só falha ao tentar ler a coleção — sem
+    // mensagem que aponte para a configuração.
+    let remote: string;
+    try {
+      remote = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
+    } catch {
+      // Sem remote (clone novo, CI sem git): não há o que comparar.
+      return;
+    }
+
+    const esperado = remote
+      .replace(/^git@github\.com:/, '')
+      .replace(/^https:\/\/github\.com\//, '')
+      .replace(/\.git$/, '');
+
+    expect(configYml).toContain(`repo: ${esperado}`);
+  });
+
+  it('não sobrou nenhum placeholder de configuração', () => {
+    expect(configYml).not.toContain('SEU-USUARIO');
+    expect(configYml).not.toMatch(/TROCAR/i);
   });
 });
