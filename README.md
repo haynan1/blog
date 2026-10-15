@@ -21,7 +21,7 @@ O site é compilado na sua máquina e enviado como HTML, CSS, JS e imagens puros
 
 ## Começar
 
-Requisito: **Node.js 20.19 ou superior** (só na sua máquina — a Hostgator não precisa de nada disso).
+Requisito: **Node.js 22.12+ na linha 22, 24.x ou 26+**, conforme o Vitest 5. Node 20 e 23/25 não são suportados (só na sua máquina — a Hostgator não precisa de nada disso).
 
 ```bash
 npm install
@@ -44,7 +44,7 @@ O `.env` pode ficar vazio no começo. Sem `PUBLIC_ADSENSE_CLIENT`, nenhum bloco 
 | `npm run preview` | Serve o `dist/` gerado, para conferir antes do upload.                        |
 | `npm run check`   | Só a verificação de tipos.                                                    |
 | `npm run format`  | Formata todo o código com Prettier.                                           |
-| `npm run verify`  | Formatação + tipos + build. Rode antes de publicar.                           |
+| `npm run verify`  | Formatação + tipos + testes + build. Rode antes de publicar.                  |
 
 > **Por que `npm run build` usa `--force`:** os blocos de anúncio dentro do artigo são gravados no HTML em tempo de compilação, e o Astro guarda o Markdown já renderizado em cache. Sem `--force`, mudar um ID de anúncio no `.env` não teria efeito — o build reaproveitaria o HTML antigo e você publicaria um site sem anúncios sem perceber. `npm run build:fast` existe para iteração rápida quando só o layout mudou.
 
